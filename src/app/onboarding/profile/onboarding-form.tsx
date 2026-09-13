@@ -2,6 +2,10 @@
 
 import { useActionState } from 'react'
 
+import { Button } from '@/components/ui/button'
+import { Field } from '@/components/ui/field'
+import { Input, Select, Textarea } from '@/components/ui/input'
+
 import { saveOnboardingProfile, type OnboardingState } from './actions'
 
 const initialState: OnboardingState = { status: 'idle' }
@@ -17,67 +21,39 @@ export function OnboardingForm({
   )
 
   return (
-    <form action={formAction} className="mt-6 flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
-        表示名
-        <input
-          name="display_name"
-          defaultValue={defaultDisplayName}
-          required
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
+    <form action={formAction} className="flex flex-col gap-4">
+      <Field label="表示名">
+        <Input name="display_name" defaultValue={defaultDisplayName} required />
+      </Field>
 
-      <label className="flex flex-col gap-1 text-sm">
-        自己PR
-        <textarea
-          name="bio"
-          rows={3}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
+      <Field label="自己PR">
+        <Textarea name="bio" rows={3} />
+      </Field>
 
-      <fieldset className="flex flex-col gap-1 text-sm">
-        <legend>活動へのモチベーション</legend>
-        <select
-          name="motivation_level"
-          defaultValue={3}
-          className="rounded border border-gray-300 px-3 py-2"
-        >
+      <Field label="活動へのモチベーション">
+        <Select name="motivation_level" defaultValue={3}>
           <option value={1}>低い</option>
           <option value={2}>やや低い</option>
           <option value={3}>普通</option>
           <option value={4}>やや高い</option>
           <option value={5}>高い</option>
-        </select>
-      </fieldset>
+        </Select>
+      </Field>
 
-      <label className="flex flex-col gap-1 text-sm">
-        経験・実績
-        <textarea
-          name="experience"
-          rows={3}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
+      <Field label="経験・実績">
+        <Textarea name="experience" rows={3} />
+      </Field>
 
-      <label className="flex flex-col gap-1 text-sm">
-        活動可能条件
-        <textarea
-          name="availability"
-          rows={2}
-          placeholder="例: 平日夜、土日のみ、月2回程度 など"
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-50"
+      <Field
+        label="活動可能条件"
+        hint="例: 平日夜、土日のみ、月2回程度 など"
       >
+        <Textarea name="availability" rows={2} />
+      </Field>
+
+      <Button type="submit" disabled={pending} className="mt-2">
         {pending ? '保存中...' : '保存する'}
-      </button>
+      </Button>
 
       {state.status === 'error' && (
         <p className="text-sm text-red-600">{state.message}</p>

@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+
+const notoSansJP = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-noto-sans-jp",
+});
 
 export const metadata: Metadata = {
   title: "サポーターマッチング",
@@ -8,8 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ja">
-      <body>{children}</body>
+    <html lang="ja" className={notoSansJP.variable}>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }
