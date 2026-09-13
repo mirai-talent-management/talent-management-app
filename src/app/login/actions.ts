@@ -26,6 +26,7 @@ export async function sendMagicLink(
   })
 
   if (error) {
+    console.error('signInWithOtp failed:', error.status, error.code, error.message)
     return {
       status: 'error',
       message: 'メール送信に失敗しました。時間をおいて再度お試しください。',
