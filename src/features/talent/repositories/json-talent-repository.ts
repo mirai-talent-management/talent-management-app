@@ -2,7 +2,7 @@ import 'server-only'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
-import { createSeedStore } from '../mocks/seed.ts'
+import { createSeedStore, prepareCasualDemoSkills } from '../mocks/seed.ts'
 import { prepareAgreementStore } from '../services/skill-agreement-service.ts'
 import { preparePolicyFields } from '../server/policy-fields.ts'
 import type { TalentStore } from '../types.ts'
@@ -21,7 +21,10 @@ async function load(): Promise<TalentStore> {
   try {
     const store: TalentStore = JSON.parse(await readFile(file,'utf8'))
     if (store.version !== 2 || !['profiles','activities','evidence','suggestions','recommendations','interviews','pairingPreferences','teams'].every(key => Array.isArray(store[key as keyof TalentStore]))) throw new Error('デモデータの形式を確認してください。自動初期化はしていません。')
-    return preparePolicyFields(prepareAgreementStore(store))
+    const needsCasualUpgrade = (store.demoSkillRevision ?? 0) < 1
+    const prepared = prepareCasualDemoSkills(preparePolicyFields(prepareAgreementStore(store)))
+    if (needsCasualUpgrade) await persist(prepared)
+    return prepared
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     const store = createSeedStore()

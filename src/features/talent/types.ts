@@ -136,6 +136,8 @@ export interface TeamComposition {
 }
 export interface TalentStore {
   version: 2
+  /** Local fictional fixture upgrade; preserves user edits after the sample is added once. */
+  demoSkillRevision?: number
   profiles: TalentProfile[]
   activities: Activity[]
   evidence: SkillEvidence[]

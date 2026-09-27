@@ -3,6 +3,7 @@ import type { TalentProfile, TalentSkill, TalentStore } from '../types.ts'
 import { normalizeSkill } from '../services/skill-normalization-service.ts'
 import { extractSkills } from '../services/skill-extraction-service.ts'
 import { prepareAgreementStore } from '../services/skill-agreement-service.ts'
+import { CASUAL_SKILL_EXAMPLES } from '../data/casual-skill-examples.ts'
 
 const seededAt = '2026-09-22T09:00:00.000Z'
 const electionRoles = [
@@ -15,6 +16,20 @@ const electionRoles = [
   ['ビラ配り', '初参加者フォロー'], ['ビラ配り', 'ハガシ'],
   ['初参加者フォロー', '写真撮影'], ['音響対応', 'ハガシ'], ['ビラ配り'], ['写真撮影'],
 ]
+
+/** Add the new fictional examples once, including to existing local demo stores. */
+export function prepareCasualDemoSkills<T extends TalentStore>(store: T): T {
+  if ((store.demoSkillRevision ?? 0) >= 1) return store
+  const profiles = new Map(store.profiles.map(profile => [profile.id, profile]))
+  for (const [index, example] of CASUAL_SKILL_EXAMPLES.entries()) {
+    const profile = profiles.get(example.profileId)
+    if (!profile || profile.talents.some(skill => skill.normalizedName === example.name || skill.originalText === example.name)) continue
+    const normalized = normalizeSkill(example.name)
+    profile.talents.push({id:`seed-casual-${example.profileId}-${index + 1}`,originalText:example.name,...normalized,category:example.category,source:'self',evidenceId:null,approvedAt:seededAt})
+  }
+  store.demoSkillRevision = 1
+  return store
+}
 
 /** Independent copies of fictional demo records; never used to seed an external database. */
 export function createSeedStore(): TalentStore {
@@ -53,13 +68,13 @@ export function createSeedStore(): TalentStore {
     ...extractSkills('会計の集計を仕事で担当しています。', { profileId: 's1', origin: 'interview', reference: '架空のインタビュー' }).filter(suggestion => suggestion.normalizedName === '会計'),
     ...extractSkills('対話会の司会を担当した進行がわかりやすかったです。', { profileId: 's1', origin: 'recommendation', reference: 'seed-recommendation-1' }),
   ].map((suggestion, index) => ({ ...suggestion, id: `seed-suggestion-${index + 1}`, createdAt: seededAt }))
-  return prepareAgreementStore({
+  return prepareCasualDemoSkills(prepareAgreementStore({
     version: 2, profiles, activities: structuredClone(initialActivities), evidence, suggestions,
     recommendations: [{ id: 'seed-recommendation-1', fromId: 's8', fromName: profiles[7].name, toId: 's1', text: '対話会の司会を担当した進行がわかりやすかったです。', source: 'recommendation', createdAt: seededAt, suggestionIds: suggestions.filter(suggestion => suggestion.origin === 'recommendation').map(suggestion => suggestion.id) }],
     interviews: [],
     pairingPreferences: [],
     teams: [], skillAgreements: [],
-  })
+  }))
 }
 
 export const DEMO_STAFF = { id: 'staff-demo', name: '議員・党職員・エリアサポーター', role: 'staff' as const }

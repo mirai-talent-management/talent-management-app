@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import type { PairingPreference, TalentProfile, TalentSkill } from '../types.ts'
-import { createSeedStore } from '../mocks/seed.ts'
+import { createSeedStore, prepareCasualDemoSkills } from '../mocks/seed.ts'
+import { CASUAL_SKILL_EXAMPLES } from '../data/casual-skill-examples.ts'
 import { buildTeam, parseTeamSlots } from './team-builder-service.ts'
 import { checkAvailability, parseSearchConstraints, semanticSearch } from './semantic-search-service.ts'
 import { normalizeSkill } from './skill-normalization-service.ts'
@@ -25,6 +26,47 @@ test('seed contains independent approved records and two pending proposals', () 
   for (const pending of a.suggestions) assert.ok(!a.profiles.find(profile => profile.id === pending.profileId)?.talents.some(talent => talent.id === pending.id))
   a.profiles[0].talents.length = 0
   assert.ok(b.profiles[0].talents.length > 0)
+})
+
+test('fictional profiles include every casual example with its original wording', () => {
+  const store = createSeedStore()
+  assert.equal(store.demoSkillRevision, 1)
+  assert.equal(CASUAL_SKILL_EXAMPLES.length, 42)
+  for (const example of CASUAL_SKILL_EXAMPLES) {
+    const profile = store.profiles.find(item => item.id === example.profileId)
+    const matches = profile?.talents.filter(item => item.originalText === example.name)
+    assert.equal(matches?.length, 1, example.name)
+    assert.equal(matches[0].normalizedName, example.name)
+    assert.equal(matches[0].category, example.category)
+    assert.equal(matches[0].source, 'self')
+  }
+  assert.equal(normalizeSkill('朗らか').normalizedName, '朗らか')
+  assert.equal(normalizeSkill('簿記経験').normalizedName, '簿記経験')
+})
+
+test('adding new demo examples to an existing local store preserves edits and runs once', () => {
+  const store = createSeedStore()
+  const profile = store.profiles[0]
+  const existing = skill('自作の得意分野')
+  profile.talents.push(existing)
+  profile.bio = '利用者が編集した自己紹介'
+  profile.talents = profile.talents.filter(item => !item.id.startsWith('seed-casual-'))
+  delete store.demoSkillRevision
+  prepareCasualDemoSkills(store)
+  assert.equal(profile.bio, '利用者が編集した自己紹介')
+  assert.ok(profile.talents.some(item => item.id === existing.id))
+  assert.equal(profile.talents.filter(item => item.id.startsWith('seed-casual-')).length, 3)
+  profile.talents = profile.talents.filter(item => item.originalText !== '明るい')
+  prepareCasualDemoSkills(store)
+  assert.ok(!profile.talents.some(item => item.originalText === '明るい'))
+})
+
+test('casual registered skills can be found with natural wording', () => {
+  const profiles = createSeedStore().profiles
+  const result = semanticSearch(profiles, '朗らかな人と活動したい')
+  assert.ok(result.constraints.skills.includes('朗らか'))
+  assert.ok(result.results.some(item => item.profileId === 's2' && item.matchedSkills.includes('朗らか')))
+  assert.ok(semanticSearch(profiles, 'フッ軽な人').results.some(item => item.profileId === 's6'))
 })
 
 test('policy searches distinguish declared interest from declared advice', () => {

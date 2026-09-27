@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile, rename } from 'node:fs/promises'
 import { randomBytes, randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { createBoardSeed, type BoardStore } from './model.ts'
+import { prepareCasualDemoSkills } from '../talent/mocks/seed.ts'
 import { prepareAgreementStore } from '../talent/services/skill-agreement-service.ts'
 import { preparePolicyFields } from '../talent/server/policy-fields.ts'
 import { demoAccounts } from '../talent/loaders/bootstrap.ts'
@@ -22,7 +23,10 @@ async function load(): Promise<BoardStore> {
   try {
     const store: BoardStore = JSON.parse(await readFile(file,'utf8'))
     if (store.version !== 2 || store.boardVersion !== 1 || !Array.isArray(store.boardAchievements)) throw new Error('統合デモの保存形式が不正です。')
-    return preparePolicyFields(prepareAgreementStore(store))
+    const needsCasualUpgrade = (store.demoSkillRevision ?? 0) < 1
+    const prepared = prepareCasualDemoSkills(preparePolicyFields(prepareAgreementStore(store)))
+    if (needsCasualUpgrade) await persist(prepared)
+    return prepared
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     const store = createBoardSeed(); await persist(store); return store

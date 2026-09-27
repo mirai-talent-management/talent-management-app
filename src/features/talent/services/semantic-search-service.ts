@@ -4,8 +4,10 @@ import { detectSkills } from './skill-normalization-service.ts'
 const regions = ['横浜', '川崎', '札幌', '仙台', '名古屋', '神戸', '北九州', 'さいたま', '広島', '福岡', '大阪', '京都', '東京', '神奈川', '千葉', '埼玉', '北海道', '宮城', '愛知', '兵庫', '静岡', '沖縄', '奈良', '岡山', '新潟', '長野', '茨城', '栃木', '群馬', '滋賀', '三重', '岐阜', '山梨', '富山', '石川', '福井', '山形', '秋田', '青森', '岩手', '福島', '和歌山', '鳥取', '島根', '山口', '徳島', '香川', '愛媛', '高知', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島']
 const compact = (text: string) => text.normalize('NFKC').toLowerCase().replace(/[\s　]/gu, '')
 
-export function parseSearchConstraints(query: string, policyTopics: string[] = []): SearchConstraints {
+export function parseSearchConstraints(query: string, policyTopics: string[] = [], registeredSkills: string[] = []): SearchConstraints {
   const text = query.normalize('NFKC')
+  const matchingRegistered = registeredSkills.filter(skill => compact(skill) && compact(text).includes(compact(skill))).sort((a,b) => compact(b).length - compact(a).length)
+  const directSkills = matchingRegistered.filter((skill,index) => !matchingRegistered.slice(0,index).some(longer => compact(longer).includes(compact(skill))))
   const policyTopic = [...policyTopics].sort((a,b) => b.length - a.length).find(topic => compact(text).includes(compact(topic))) ?? null
   const policyMode = policyTopic ? /助言|アドバイス|相談|知見/u.test(text) ? 'advice' : /関心|興味|学び/u.test(text) ? 'interest' : null : null
   let day = text.match(/([月火水木金土日])(?:曜(?:日)?)/u)?.[1] ?? text.match(/[（(]([月火水木金土日])[）)]/u)?.[1] ?? null
@@ -23,7 +25,7 @@ export function parseSearchConstraints(query: string, policyTopics: string[] = [
     else timeSlot = '時間帯の個別確認が必要'
   }
   return {
-    skills: detectSkills(text).map(skill => skill.normalizedName),
+    skills: [...new Set([...detectSkills(text).map(skill => skill.normalizedName),...directSkills])],
     policyTopic,
     policyMode,
     region: regions.find(region => text.includes(region)) ?? null,
@@ -59,7 +61,8 @@ export function skillMatches(profile: TalentProfile, requested: string): string[
 /** Public approved capabilities + explicit availability only. No private-preference parameter exists. */
 export function semanticSearch(profiles: TalentProfile[], query: string): SearchResponse {
   const topics = [...new Set(profiles.flatMap(profile => [...profile.policyInterests, ...(profile.policyAdviceTopics ?? [])]))]
-  const constraints = parseSearchConstraints(query,topics)
+  const registeredSkills = [...new Set(profiles.flatMap(profile => profile.talents.filter(skill => Boolean(skill.approvedAt)).map(skill => skill.normalizedName)))]
+  const constraints = parseSearchConstraints(query,topics,registeredSkills)
   const unsupported = Boolean(query.trim()) && !constraints.skills.length && !constraints.policyTopic && !constraints.region && !constraints.weekday && !constraints.timeSlot && !constraints.mode
   if (unsupported) return { mode: 'mock', query, constraints, results: [], notice: 'ローカル規則で検索条件を読み取れませんでした。具体的なスキル・政策分野・地域・曜日・時間帯を指定してください。外部AIは利用していません。' }
   const results = profiles.flatMap(profile => {

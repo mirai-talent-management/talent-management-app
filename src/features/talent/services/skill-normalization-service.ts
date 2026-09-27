@@ -1,4 +1,5 @@
 import type { SkillCategory } from '../types.ts'
+import { CASUAL_SKILL_EXAMPLES } from '../data/casual-skill-examples.ts'
 
 export interface NormalizedSkill { normalizedName: string; relatedTerms: string[]; category: SkillCategory }
 interface SkillDefinition extends NormalizedSkill { pattern: RegExp }
@@ -35,6 +36,11 @@ export const SKILL_DICTIONARY: SkillDefinition[] = [
 
 export function normalizeSkill(text: string): NormalizedSkill {
   const clean = text.normalize('NFKC').trim().replace(/\s+/gu, ' ')
+  const casual = CASUAL_SKILL_EXAMPLES.find(skill => skill.name.toLocaleLowerCase() === clean.toLocaleLowerCase())
+  if (casual) {
+    const related = SKILL_DICTIONARY.find(skill => skill.pattern.test(clean))
+    return {normalizedName:casual.name,relatedTerms:related ? [...new Set([related.normalizedName,...related.relatedTerms].filter(term => term !== casual.name))] : [],category:casual.category}
+  }
   const definition = SKILL_DICTIONARY.find(skill => skill.normalizedName.toLocaleLowerCase() === clean.toLocaleLowerCase())
     ?? SKILL_DICTIONARY.find(skill => skill.pattern.test(clean))
   return definition ? { normalizedName: definition.normalizedName, relatedTerms: [...definition.relatedTerms], category: definition.category }
