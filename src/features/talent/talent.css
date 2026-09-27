@@ -67,6 +67,12 @@
 .t-search-overview strong { color:#41674d; font-size:20px; font-weight:650; }
 .t-search-overview span { font-size:11px; }
 .t-search-overview .t-overview-hint { margin-left:auto; display:flex; align-items:center; gap:5px; font-size:10px; color:#9aaa97; }
+.t-directory-search { display:grid; grid-template-columns:minmax(180px,1.2fr) minmax(170px,1fr) minmax(190px,1fr); align-items:end; gap:15px; margin-bottom:20px; padding:17px 19px; border:1px solid #dce9db; border-radius:9px; background:#fbfdf9; }
+.t-directory-search > div { display:flex; flex-direction:column; gap:5px; align-self:center; }
+.t-directory-search > div strong { color:#446d50; font-size:14px; }
+.t-directory-search > div span { color:#869d87; font-size:11px; line-height:1.5; }
+.t-directory-search .t-field { font-size:11px; }
+.t-directory-search .t-input { padding:8px 10px; }
 .t-natural-search { background:linear-gradient(120deg,#e9f6ef 0%,#e4f4eb 50%,#edf5e4 100%); border:1px solid #cfe5d3; border-radius:11px; padding:0 23px 19px; margin-bottom:27px; }
 .t-search-tabs { display:flex; gap:24px; border-bottom:1px solid #d6e7d6; margin-bottom:19px; }
 .t-search-tabs button { background:none; border:0; border-bottom:2px solid transparent; display:flex; align-items:center; gap:7px; padding:16px 0 13px; font-size:12px; font-weight:600; color:#8ca18b; }
@@ -308,6 +314,18 @@
 .t-self-grid > aside .t-list h3 { font-size:13px; margin:8px 0; font-weight:550; }
 .t-self-grid .t-chip input { accent-color:#239b7e; width:13px; height:13px; flex-shrink:0; margin-right:4px; }
 .t-self-grid .t-chip small { margin-left:auto; font-size:9px; color:#97aa87; padding-left:9px; }
+.t-supporter-picker { display:flex; flex-direction:column; gap:11px; }
+.t-supporter-picker > strong { color:#627d64; font-size:13px; font-weight:600; }
+.t-supporter-picker .t-form-grid { gap:12px; }
+.t-supporter-picker > .t-muted { font-size:11px; }
+.t-supporter-picker-results { display:flex; flex-direction:column; gap:7px; max-height:280px; overflow:auto; }
+.t-supporter-picker-results button { display:flex; align-items:center; gap:10px; width:100%; padding:9px 11px; border:1px solid #dde9dd; border-radius:8px; background:#fff; text-align:left; color:#507457; }
+.t-supporter-picker-results button:hover,.t-supporter-picker-results button:focus-visible,.t-supporter-picker-results button.is-selected { border-color:#67ad83; background:#ecf8ef; outline-color:#67ad83; }
+.t-supporter-picker-results button > span:nth-child(2) { display:flex; flex:1; flex-direction:column; min-width:0; gap:3px; }
+.t-supporter-picker-results button strong { font-size:13px; }
+.t-supporter-picker-results button small { color:#879a85; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.t-supporter-picker-results button > span:last-child { flex-shrink:0; color:#3c9165; font-size:11px; }
+.t-supporter-picker-selected { padding:9px 11px; border-radius:6px; background:#e9f7ec; color:#31754b; font-size:12px; font-weight:600; }
 .t-interview-chat { display:flex; flex-direction:column; gap:19px; max-height:510px; overflow:auto; padding:4px 3px 15px; }
 .t-chat-bubble { padding:16px 18px; background:#eef7e8; color:#6d8c52; border-radius:12px 12px 12px 2px; max-width:92%; font-size:14px; line-height:1.9; }
 .t-chat-bubble > small { font-size:10px; color:#9bb187; display:block; margin-bottom:7px; }
@@ -359,6 +377,8 @@
 .t-recommend-card-top{display:flex;align-items:flex-start;justify-content:space-between;min-height:50px}.t-recommend-card-top .t-avatar{background:#e6f2eb}
 .t-recommend-cards h3{font-size:15px;margin:0}.t-recommend-cards p{font-size:11px;line-height:1.6;margin:0;color:#788a7b;overflow-wrap:anywhere}.t-recommend-cards small{font-size:10px;color:#798d78}.t-recommend-cards .t-agreement-wrap{margin-top:auto;padding-top:8px}
 @media(max-width:700px){.t-search-art{width:84px;height:54px;margin:0 0 0 7px}.t-recommend-cards{grid-template-columns:1fr}.t-recommend-gallery-art{width:96px}.t-recommend-gallery>div:first-child{padding:12px;gap:10px}.t-recommend-gallery h2{font-size:14px}}
+@media(max-width:760px){.t-directory-search{grid-template-columns:1fr 1fr}.t-directory-search>div{grid-column:1/-1}}
+@media(max-width:520px){.t-directory-search{grid-template-columns:1fr}.t-directory-search>div{grid-column:auto}.t-supporter-picker .t-form-grid{grid-template-columns:1fr}}
 .t-policy-fields{display:grid;gap:10px;margin:4px 0 12px}
 .t-policy-fields>div{padding:12px 14px;border:1px solid #d8e7dc;border-radius:9px;background:#f7fbf8}
 .t-policy-fields strong{display:block;margin-bottom:7px;color:#284239;font-size:12px}
