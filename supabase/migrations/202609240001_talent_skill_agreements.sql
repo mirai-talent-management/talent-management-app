@@ -53,20 +53,20 @@ $$;
 create function public.talent_toggle_skill_agreement(p_skill_id uuid)
 returns table(agreed boolean,agreement_count bigint)
 language plpgsql security definer set search_path = '' as $$
-declare target_id uuid; recommender_id uuid; removed_count integer;
+declare target_id uuid; removed_count integer;
 begin
   if auth.uid() is null then raise exception 'ログインが必要です。' using errcode = '42501'; end if;
   if not exists(select 1 from public.talent_memberships m where m.user_id = auth.uid() and m.role in ('supporter','staff')) then
     raise exception '登録されたアカウントで操作してください。' using errcode = '42501';
   end if;
-  select s.profile_id,r.from_id into target_id,recommender_id
+  select s.profile_id into target_id
   from public.talent_skills s join public.talent_recommendations r
     on r.id = s.recommendation_id and r.to_id = s.profile_id
   where s.id = p_skill_id and s.source = 'recommendation' and s.approved_at is not null
   for update of s;
   if not found then raise exception '承認済みの推薦スキルが見つかりません。'; end if;
-  if auth.uid() = target_id or auth.uid() = recommender_id then
-    raise exception '本人と推薦者は同意を追加できません。' using errcode = '42501';
+  if auth.uid() = target_id then
+    raise exception '本人は自分のスキルにいいねできません。' using errcode = '42501';
   end if;
   delete from public.talent_skill_agreements a where a.skill_id = p_skill_id and a.actor_id = auth.uid();
   get diagnostics removed_count = row_count;

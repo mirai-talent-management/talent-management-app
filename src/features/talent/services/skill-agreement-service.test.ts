@@ -27,16 +27,17 @@ test('other supporters agree once, see a public count, and can take agreement ba
   result=executeTalentAction(store,actor(voterId),{action:'skill.agreement.toggle',skillId:skill.id}) as {count:number;agreed:boolean}
   assert.deepEqual({count:result.count,agreed:result.agreed},{count:2,agreed:false})
 })
-test('target and recommender cannot agree; pending, self and unknown skills cannot be endorsed',()=>{
+test('the skill owner cannot react; pending, self and unknown skills cannot be endorsed',()=>{
   const store=createSeedStore(),skill=store.profiles[0].talents.find(item=>item.source==='recommendation')!
   const recommender=store.recommendations.find(item=>item.id===skill.recommendationId)!
   const input={action:'skill.agreement.toggle',skillId:skill.id}
-  for(const id of ['s1',recommender.fromId]) assert.throws(()=>executeTalentAction(store,actor(id),input))
+  assert.throws(()=>executeTalentAction(store,actor('s1'),input))
+  assert.equal(projectBootstrap(store,actor(recommender.fromId)).agreementSummaries[skill.id].canAgree,true)
   for(const skillId of [store.profiles[0].talents.find(item=>item.source==='self')!.id,store.suggestions[0].id,'unknown']) assert.throws(()=>executeTalentAction(store,actor('s18'),{...input,skillId}))
   assert.throws(()=>executeTalentAction(store,actor('s18'),{...input,actorId:'s1'}))
   assert.equal(store.skillAgreements.length,0)
 })
-test('recommendation stays pending until owner approval; original recommender remains excluded',()=>{
+test('recommendation stays pending until owner approval; the original recommender can thank the owner',()=>{
   const store=createSeedStore()
   executeTalentAction(store,actor('s3'),{action:'recommendation.send',toId:'s1',text:'音響の準備を担当しました。'})
   const rec=store.recommendations.at(-1)!,suggestion=store.suggestions.find(item=>rec.suggestionIds.includes(item.id))!
@@ -44,7 +45,9 @@ test('recommendation stays pending until owner approval; original recommender re
   executeTalentAction(store,actor('s1'),{action:'suggestion.review',id:suggestion.id,decision:'approved'})
   const skill=store.profiles[0].talents.at(-1)!
   assert.equal(skill.recommendationId,rec.id)
-  assert.throws(()=>executeTalentAction(store,actor('s3'),{action:'skill.agreement.toggle',skillId:skill.id}))
+  assert.equal(projectBootstrap(store,actor('s3')).agreementSummaries[skill.id].canAgree,true)
+  const reaction=executeTalentAction(store,actor('s3'),{action:'skill.agreement.toggle',skillId:skill.id}) as {count:number;agreed:boolean}
+  assert.deepEqual({count:reaction.count,agreed:reaction.agreed},{count:1,agreed:true})
   assert.equal(projectBootstrap(store,actor('s4')).agreementSummaries[skill.id].canAgree,true)
 })
 test('saved pre-agreement sample stores gain deterministic provenance without erasing edits',()=>{

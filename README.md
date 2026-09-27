@@ -15,7 +15,7 @@ npm run dev
 
 [http://127.0.0.1:3000](http://127.0.0.1:3000) を開くと、[Action Board × Talent 統合デモ](http://127.0.0.1:3000/action-board-demo)へ自動で移動します。デモに環境変数やAPIキーは不要です。
 
-初回はサポーターのデモアカウントで統合デモのホームが開きます。「スタッフとして見る」でスタッフ画面に切り替えられます。これは実ユーザーのログインではなく、架空アカウントを切り替えるデモです。
+初回はサポーターのデモアカウントで統合デモのホームが開きます。議員・党職員・エリアサポーターのデモアカウントに切り替えると、「活動に合う仲間を探す」画面が開きます。これは実ユーザーのログインではなく、架空アカウントを切り替えるデモです。
 
 ## 統合デモで体験できること
 
@@ -44,7 +44,7 @@ npm run dev
 5. **AIインタビュー**に「写真撮影が得意です」と回答し、深掘りを体験。「中断」後も再開できます。
 6. **AI発見候補**でインタビュー・活動記録・推薦から生まれた候補の根拠と出典を確認し、表現を修正して承認、または却下。承認するまで公開スキルにはなりません。
 7. **他者推薦**で別のサポーターに自由文を送り、相手のデモアカウントへ切り替えて候補を承認。
-   承認済みの推薦スキルには、推薦者・本人以外のサポーターやスタッフが押せる「そう思う！😊」と同意人数も表示します。
+   承認済みの推薦スキルには、本人以外のサポーターやスタッフが共感や感謝を伝えられるサムアップと件数を表示します。元の推薦者も押せます。いいねの数は能力の点数には使いません。
 8. スタッフの**活動登録**で活動・必要スキルを登録。詳細の連絡画面ではメール／Slack向け文面を作成・コピーできます（実送信なし）。
 
 ## 検討中の追加要素
@@ -83,7 +83,7 @@ npm run dev
 - `repositories/`・`adapters/`：保存先・Action Board活動記録の接続境界
 - `server/`：セッション・入力検証・認証adapter
 - `supabase/migrations/202609220001_talent_v02.sql`：追加テーブル・RLS・承認RPC（本番未適用）
-- `supabase/migrations/202609240001_talent_skill_agreements.sql`：推薦スキル同意のテーブル・RLS・RPC案（本番未適用）
+- `supabase/migrations/202609240001_talent_skill_agreements.sql`：推薦スキルへのサムアップのテーブル・RLS・RPC案（本番未適用）
 - `supabase/migrations/202609260001_talent_policy_advice.sql`：本人申告の政策助言項目案（本番未適用）
 
 [Action Board比較・統合計画](docs/v02-action-board-integration.md)／[データ・権限設計](docs/v02-data-security.md)
@@ -114,6 +114,6 @@ NEXT_DIST_DIR=.next-build npm run build
 node scripts/verify-demo.mjs
 ```
 
-70件のテストで旧版、候補承認、検索、チーム制約、情報分離、権限、Action Board adapter、推薦への同意と統合フローを確認。単独版HTTP確認は24項目、`node scripts/verify-board-demo.mjs` による統合デモ確認は42項目です。
+70件のテストで旧版、候補承認、検索、チーム制約、情報分離、権限、Action Board adapter、推薦スキルへのサムアップと統合フローを確認。単独版HTTP確認は24項目、`node scripts/verify-board-demo.mjs` による統合デモ確認は42項目です。
 
 productionビルドをローカルで試す場合だけ、`npm run build` 後に `TALENT_DEMO_ALLOW_PRODUCTION=true npm start` を使用します。公開環境向け設定ではありません。

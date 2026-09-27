@@ -26,7 +26,7 @@ const teamDefault='10月10日 横浜駅街宣 13〜17時。音響1名、撮影1�
 const date=(value:string)=>new Date(value).toLocaleDateString('ja-JP',{month:'long',day:'numeric'})
 
 export default function ActionBoardDemo({initialView}:{initialView:string}) {
-  const [view,setView]=useState<View>(VIEWS.includes(initialView as View)?initialView as View:'home')
+  const [requestedView,setView]=useState<View>(VIEWS.includes(initialView as View)?initialView as View:'home')
   const [data,setData]=useState<BoardBootstrap|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[toast,setToast]=useState('')
   const [mission,setMission]=useState<DemoMission|null>(null),[person,setPerson]=useState<string|null>(null),[recommend,setRecommend]=useState<TalentProfile|null>(null)
   const [activity,setActivity]=useState<Activity|'new'|null>(null),[teamPrompt,setTeamPrompt]=useState(teamDefault)
@@ -34,11 +34,13 @@ export default function ActionBoardDemo({initialView}:{initialView:string}) {
   useEffect(()=>{refresh().catch(cause=>setError(cause.message))},[])
   useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(timer)},[toast])
   useEffect(()=>{const back=()=>{const part=window.location.pathname.split('/').filter(Boolean)[1];setView(VIEWS.includes(part as View)?part as View:'home')};window.addEventListener('popstate',back);return()=>window.removeEventListener('popstate',back)},[])
+  useEffect(()=>{if(data?.actor.role==='staff'&&requestedView==='home'){setView('supporters');window.history.replaceState(null,'','/action-board-demo/supporters')}},[data?.actor.role,requestedView])
   function navigate(next:string){if(!VIEWS.includes(next as View))return;setView(next as View);setError('');window.history.pushState(null,'',`/action-board-demo${next==='home'?'':`/${next}`}`);window.scrollTo({top:0,behavior:'instant'})}
   async function action(payload:Record<string,unknown>){await boardApi.action(payload);await refresh();setToast(payload.action==='suggestion.review'?'確認結果を保存しました':'デモに保存しました')}
   async function switchAccount(id:string){setBusy(true);setError('');setMission(null);setPerson(null);setRecommend(null);setActivity(null);try{await boardApi.switchAccount(id);await refresh();navigate(id==='staff-demo'?'supporters':'home')}catch(cause){setError(cause instanceof Error?cause.message:'切り替えできませんでした')}finally{setBusy(false)}}
   if(!data)return <div className="talent-app ab-demo ab-loading"><Sprout size={36}/><h1>Action Board × Talent</h1><p>{error||'統合デモを準備しています…'}</p>{error&&<button className="ab-button primary" onClick={()=>switchAccount('s1')}>デモアカウントを選び直す</button>}</div>
   const staff=data.actor.role==='staff',self=data.profiles.find(profile=>profile.id===data.actor.id),pending=data.suggestions.filter(item=>item.status==='pending').length
+  const view=staff&&requestedView==='home'?'supporters':requestedView
   const selected=data.profiles.find(profile=>profile.id===person)
   const mine=['account','settings','talent','profile','suggestions','interview','recommendations','history'].includes(view)
   const talentView=['talent','profile','suggestions','interview','recommendations'].includes(view)
@@ -46,7 +48,7 @@ export default function ActionBoardDemo({initialView}:{initialView:string}) {
   const forbidden=(staff&&mine)||(!staff&&['supporters','team','activities'].includes(view))
   return <div className={`talent-app ab-demo ${talentView?'ab-talent-surface':''} ${staffView?'ab-staff-surface':''}`}>
     <div className="ab-demo-bar"><span><ShieldCheck size={14}/>非公式・ローカル統合デモ <i/>すべて架空データ／公式環境に未接続</span><button onClick={()=>navigate('about')}>このデモについて <ChevronRight size={13}/></button></div>
-    <header className="ab-header"><button className="ab-brand" onClick={()=>navigate('home')}><span className="ab-brand-symbol"><span>チーム<br/>みらい</span></span><span>アクションボード</span></button><nav aria-label="統合デモのメインメニュー"><button onClick={()=>navigate('home')} className={view==='home'?'active':''}><Home size={16}/>ホーム</button></nav><AccountMenu key={data.actor.id} name={data.actor.name} staff={staff} onNavigate={navigate}/></header>
+    <header className="ab-header"><button className="ab-brand" onClick={()=>navigate(staff?'supporters':'home')}><span className="ab-brand-symbol"><span>チーム<br/>みらい</span></span><span>アクションボード</span></button>{!staff&&<nav aria-label="統合デモのメインメニュー"><button onClick={()=>navigate('home')} className={view==='home'?'active':''}><Home size={16}/>ホーム</button></nav>}<AccountMenu key={data.actor.id} name={data.actor.name} staff={staff} onNavigate={navigate}/></header>
     <div className="ab-role-strip"><span><span className="ab-dot"/> {staff?'議員・党職員・エリアサポーターの体験':'サポーター本人の体験'}</span><div><label className="ab-demo-account-picker">デモアカウント <select aria-label="統合デモのアカウント" value={data.actor.id} disabled={busy} onChange={event=>switchAccount(event.target.value)}>{data.demoAccounts.map(actor=><option key={actor.id} value={actor.id}>{actor.name}</option>)}</select></label><button disabled={busy} onClick={()=>switchAccount(staff?'s1':'staff-demo')}>{staff?'サポーターとして見る':'スタッフとして見る'} <ArrowRight size={13}/></button></div></div>
     {error&&<div className="ab-main"><div className="t-alert t-alert-error" role="alert">{error}</div></div>}
     {forbidden?<main className="ab-main"><div className="ab-empty"><LockKeyhole size={32}/><h1>この画面は{staff?'サポーター本人':'議員・党職員・エリアサポーター'}用です</h1><button className="ab-button" onClick={()=>switchAccount(staff?'s1':'staff-demo')}>対応するデモアカウントに切り替える</button></div></main>:<>
@@ -65,7 +67,7 @@ export default function ActionBoardDemo({initialView}:{initialView:string}) {
         {view==='about'&&<About/>}
       </main>}
     </>}
-    <footer className="ab-footer"><div><Sprout size={24}/><strong>Action Board <span>× Talent</span></strong><p>アクションの先に、ひとりひとりの可能性を。</p></div><span>非公式の統合提案・架空データのみ<br/>本番サービスへの接続・送信はありません</span><Link href="/">単独版 Talent Managementへ <ArrowRight size={14}/></Link></footer>
+    <footer className="ab-footer"><div><Sprout size={24}/><strong>Action Board <span>× Talent</span></strong><p>アクションの先に、ひとりひとりの可能性を。</p></div><span>非公式の統合提案・架空データのみ<br/>本番サービスへの接続・送信はありません</span><Link href="/talent/supporters">単独版 Talent Managementへ <ArrowRight size={14}/></Link></footer>
     {toast&&<div className="t-toast" role="status"><CheckCircle2 size={18}/>{toast}</div>}
     {mission&&<TalentModal title={mission.title} onClose={()=>setMission(null)}><MissionDialog key={mission.id} mission={mission} data={data} busy={busy} onComplete={async performedRole=>{setBusy(true);try{await action({action:'board.complete',missionId:mission.id,performedRole})}finally{setBusy(false)}}} onNext={()=>{setMission(null);navigate('suggestions')}} onHistory={()=>{setMission(null);navigate('history')}} onSupporter={()=>switchAccount('s1')}/></TalentModal>}
     {selected&&<TalentModal title="サポーター詳細" className="ab-supporter-modal" onClose={()=>setPerson(null)}><ProfileDetail profile={selected} data={data} onAction={action} onRecommend={()=>{setRecommend(selected);setPerson(null)}}/></TalentModal>}

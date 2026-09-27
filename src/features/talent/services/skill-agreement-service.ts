@@ -40,14 +40,14 @@ export function agreementSummaries(store: TalentStore, actor: Actor): Record<str
     const recommendation = store.recommendations.find(rec => rec.id === skill.recommendationId && rec.toId === profile.id)
     if (!recommendation) continue
     const votes = store.skillAgreements.filter(item => item.skillId === skill.id)
-    summaries[skill.id] = {count:new Set(votes.map(item => item.actorId)).size,agreed:votes.some(item => item.actorId === actor.id),canAgree:actor.id !== profile.id && actor.id !== recommendation.fromId}
+    summaries[skill.id] = {count:new Set(votes.map(item => item.actorId)).size,agreed:votes.some(item => item.actorId === actor.id),canAgree:actor.id !== profile.id}
   }
   return summaries
 }
 
 export function toggleSkillAgreement(store: TalentStore, actor: Actor, skillId: string) {
-  const {profile,recommendation} = eligible(store,actor,skillId)
-  if (actor.id === profile.id || actor.id === recommendation.fromId) throw new TalentError('本人と推薦者は同意を追加できません。',403)
+  const {profile} = eligible(store,actor,skillId)
+  if (actor.id === profile.id) throw new TalentError('本人は自分のスキルにいいねできません。',403)
   const found = store.skillAgreements.some(item => item.skillId === skillId && item.actorId === actor.id)
   store.skillAgreements = store.skillAgreements.filter(item => !(item.skillId === skillId && item.actorId === actor.id))
   if (!found) store.skillAgreements.push({skillId,actorId:actor.id,createdAt:new Date().toISOString()})

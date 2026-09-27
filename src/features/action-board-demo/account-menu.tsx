@@ -21,7 +21,6 @@ const supporterItems: MenuItem[][] = [
 
 const staffItems: MenuItem[][] = [
   [
-    { label: 'ホーム', view: 'home' },
     { label: '人材を探す', view: 'supporters' },
     { label: 'チームをつくる', view: 'team' },
     { label: '活動管理', view: 'activities' },
