@@ -12,6 +12,7 @@ import { TalentAvatar, TalentModal, completeness } from '../talent/components/ta
 import { boardApi } from './client'
 import { TalentIllustration } from '../talent/components/talent-illustration'
 import { SkillAgreementButton } from '../talent/components/skill-agreement-button'
+import { ContactDraft, type ContactChannel } from '../talent/components/contact-draft'
 import { BoardAccountSettings, BoardMyPage } from './account-pages'
 import { AccountMenu } from './account-menu'
 import type { BoardBootstrap, DemoMission } from './model'
@@ -29,6 +30,7 @@ export default function ActionBoardDemo({initialView}:{initialView:string}) {
   const [requestedView,setView]=useState<View>(VIEWS.includes(initialView as View)?initialView as View:'home')
   const [data,setData]=useState<BoardBootstrap|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[toast,setToast]=useState('')
   const [mission,setMission]=useState<DemoMission|null>(null),[person,setPerson]=useState<string|null>(null),[recommend,setRecommend]=useState<TalentProfile|null>(null)
+  const [contact,setContact]=useState<{profile:TalentProfile;channel:ContactChannel}|null>(null)
   const [activity,setActivity]=useState<Activity|'new'|null>(null),[teamPrompt,setTeamPrompt]=useState(teamDefault)
   async function refresh(){setData(await boardApi.load())}
   useEffect(()=>{refresh().catch(cause=>setError(cause.message))},[])
@@ -37,7 +39,7 @@ export default function ActionBoardDemo({initialView}:{initialView:string}) {
   useEffect(()=>{if(data?.actor.role==='staff'&&requestedView==='home'){setView('supporters');window.history.replaceState(null,'','/action-board-demo/supporters')}},[data?.actor.role,requestedView])
   function navigate(next:string){if(!VIEWS.includes(next as View))return;setView(next as View);setError('');window.history.pushState(null,'',`/action-board-demo${next==='home'?'':`/${next}`}`);window.scrollTo({top:0,behavior:'instant'})}
   async function action(payload:Record<string,unknown>){await boardApi.action(payload);await refresh();setToast(payload.action==='suggestion.review'?'確認結果を保存しました':'デモに保存しました')}
-  async function switchAccount(id:string){setBusy(true);setError('');setMission(null);setPerson(null);setRecommend(null);setActivity(null);try{await boardApi.switchAccount(id);await refresh();navigate(id==='staff-demo'?'supporters':'home')}catch(cause){setError(cause instanceof Error?cause.message:'切り替えできませんでした')}finally{setBusy(false)}}
+  async function switchAccount(id:string){setBusy(true);setError('');setMission(null);setPerson(null);setRecommend(null);setContact(null);setActivity(null);try{await boardApi.switchAccount(id);await refresh();navigate(id==='staff-demo'?'supporters':'home')}catch(cause){setError(cause instanceof Error?cause.message:'切り替えできませんでした')}finally{setBusy(false)}}
   if(!data)return <div className="talent-app ab-demo ab-loading"><Sprout size={36}/><h1>Action Board × Talent</h1><p>{error||'統合デモを準備しています…'}</p>{error&&<button className="ab-button primary" onClick={()=>switchAccount('s1')}>デモアカウントを選び直す</button>}</div>
   const staff=data.actor.role==='staff',self=data.profiles.find(profile=>profile.id===data.actor.id),pending=data.suggestions.filter(item=>item.status==='pending').length
   const view=staff&&requestedView==='home'?'supporters':requestedView
@@ -70,7 +72,8 @@ export default function ActionBoardDemo({initialView}:{initialView:string}) {
     <footer className="ab-footer"><div><Sprout size={24}/><strong>Action Board <span>× Talent</span></strong><p>アクションの先に、ひとりひとりの可能性を。</p></div><span>非公式の統合提案・架空データのみ<br/>本番サービスへの接続・送信はありません</span><Link href="/talent/supporters">単独版 Talent Managementへ <ArrowRight size={14}/></Link></footer>
     {toast&&<div className="t-toast" role="status"><CheckCircle2 size={18}/>{toast}</div>}
     {mission&&<TalentModal title={mission.title} onClose={()=>setMission(null)}><MissionDialog key={mission.id} mission={mission} data={data} busy={busy} onComplete={async performedRole=>{setBusy(true);try{await action({action:'board.complete',missionId:mission.id,performedRole})}finally{setBusy(false)}}} onNext={()=>{setMission(null);navigate('suggestions')}} onHistory={()=>{setMission(null);navigate('history')}} onSupporter={()=>switchAccount('s1')}/></TalentModal>}
-    {selected&&<TalentModal title="サポーター詳細" className="ab-supporter-modal" onClose={()=>setPerson(null)}><ProfileDetail profile={selected} data={data} onAction={action} onRecommend={()=>{setRecommend(selected);setPerson(null)}}/></TalentModal>}
+    {selected&&<TalentModal title="サポーター詳細" className="ab-supporter-modal" onClose={()=>setPerson(null)}><ProfileDetail profile={selected} data={data} onAction={action} onRecommend={()=>{setRecommend(selected);setPerson(null)}} onContact={staff?channel=>{setContact({profile:selected,channel});setPerson(null)}:undefined}/></TalentModal>}
+    {contact&&staff&&<TalentModal title="連絡文をつくる・送信を試す" onClose={()=>setContact(null)}><ContactDraft key={`${contact.profile.id}-${contact.channel}`} profile={contact.profile} activities={data.activities} initialChannel={contact.channel} onNotify={setToast}/></TalentModal>}
     {recommend&&<TalentModal title="強みを推薦する" onClose={()=>setRecommend(null)}><QuickRecommendation profile={recommend} onSave={async text=>{await action({action:'recommendation.send',toId:recommend.id,text});setRecommend(null)}}/></TalentModal>}
     {activity&&<TalentModal title={activity==='new'?'活動を登録する':'活動を編集する'} onClose={()=>setActivity(null)}><ActivityEditor activity={activity==='new'?undefined:activity} onCancel={()=>setActivity(null)} onSave={async value=>{await action({action:'activity.save',activity:value});setActivity(null)}}/></TalentModal>}
   </div>

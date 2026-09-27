@@ -209,6 +209,7 @@
 .t-modal-heading h2 { font-size:17px; font-weight:650; }
 .t-modal-actions { padding:19px 25px; border-top:1px solid #e3e9dc; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; position:sticky; bottom:0; background:#fffffff5; backdrop-filter:blur(8px); }
 .t-dialog-body { padding:27px; display:flex; flex-direction:column; gap:19px; }
+.t-contact-actions { display:flex; flex-wrap:wrap; gap:10px; }
 .t-dialog-body > .t-alert { margin-bottom:0; }
 .t-detail-cover { display:flex; justify-content:space-between; align-items:center; gap:20px; background:linear-gradient(135deg,#e8f7e9,#f4f9e7); border-bottom:1px solid #e0ead6; padding:33px 29px; }
 .t-detail-identity { display:flex; align-items:center; gap:22px; }
