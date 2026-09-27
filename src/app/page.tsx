@@ -1,2 +1,2 @@
-import App from '../App'
-export default function Page() { return <App /> }
+import TalentApp from '../features/talent/components/talent-app'
+export default function Page() { return <TalentApp initialView="supporters" /> }

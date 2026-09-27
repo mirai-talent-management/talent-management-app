@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import '../styles.css'
 
 export const metadata: Metadata = {
-  title: 'みらいコネクト | サポータースキルシート',
-  description: 'チームみらいのサポーターのスキルと活動をつなぐスキルシートアプリ。',
+  title: 'みらいタレントマネジメント | v0.2',
+  description: 'サポーターのスキル・経験を育て、活動と仲間をつなぐTalent Managementプロトタイプ。',
   icons: { icon: '/favicon.svg' },
 }
 
