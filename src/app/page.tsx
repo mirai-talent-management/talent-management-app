@@ -1,2 +1,5 @@
-import TalentApp from '../features/talent/components/talent-app'
-export default function Page() { return <TalentApp initialView="supporters" /> }
+import { redirect } from 'next/navigation'
+
+export default function Page() {
+  redirect('/action-board-demo')
+}
