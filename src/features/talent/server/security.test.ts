@@ -9,6 +9,7 @@ import { assertDemoRequest, signDemoSession, verifyDemoSession } from './session
 import { ActionBoardIdentityAdapter } from './auth-adapter.ts'
 import { TalentError } from './errors.ts'
 import { preparePolicyFields } from './policy-fields.ts'
+import { splitResidenceLocation } from '../services/supporter-directory.ts'
 
 const staff: Actor = {id:'staff-demo',role:'staff',name:'スタッフ'}
 const s1: Actor = {id:'s1',role:'supporter',name:'本人'}
@@ -28,8 +29,8 @@ function sensitiveStore(): TalentStore {
 }
 function patch(store: TalentStore): ProfilePatch {
   const profile = store.profiles.find(profile => profile.id === s1.id)!
-  const keys = ['name','kana','headline','location','bio','email','slack','hoursPerMonth','interests','motivation','experience','workExperience','personalExperience','electionExperience','communityExperience','participation','availabilityDetails','policyInterests','policyAdviceTopics','policyAdvicePerspective'] as const
-  return Object.fromEntries(keys.map(key => [key,structuredClone(profile[key])])) as unknown as ProfilePatch
+  const keys = ['name','kana','headline','bio','email','slack','hoursPerMonth','interests','motivation','experience','workExperience','personalExperience','electionExperience','communityExperience','participation','availabilityDetails','policyInterests','policyAdviceTopics','policyAdvicePerspective'] as const
+  return {...Object.fromEntries(keys.map(key => [key,structuredClone(profile[key])])),municipality:splitResidenceLocation(profile.location).municipality} as ProfilePatch
 }
 
 test('staff bootstrap excludes candidates, interviews, preferences and unrelated recommendation prose',() => {
@@ -190,6 +191,15 @@ test('profile edits whitelist fields and cannot change role, identity or skill p
   assert.equal(store.profiles.find(item => item.id === s1.id)!.name,'更新した名前')
   assert.deepEqual(store.profiles.find(item => item.id === s1.id)!.talents,before)
   for (const input of [{...valid,id:s2.id},{...valid,role:'staff'},{...valid,talents:[]},{...valid,hoursPerMonth:745},{...valid,participation:['unknown']}]) assertStatus(() => executeTalentAction(store,s1,{action:'profile.save',profile:input}),400)
+})
+test('profile edits allow only municipality and preserve the linked prefecture',() => {
+  const store = sensitiveStore()
+  const valid = patch(store)
+  executeTalentAction(store,s1,{action:'profile.save',profile:{...valid,municipality:'川崎市'}})
+  assert.equal(store.profiles.find(item => item.id === s1.id)!.location,'神奈川県川崎市')
+  assertStatus(() => executeTalentAction(store,s1,{action:'profile.save',profile:{...valid,location:'東京都渋谷区'}}),400)
+  assertStatus(() => executeTalentAction(store,s1,{action:'profile.save',profile:{...valid,municipality:'東京都渋谷区'}}),400)
+  assert.equal(store.profiles.find(item => item.id === s1.id)!.location,'神奈川県川崎市')
 })
 test('staff-only actions reject supporter even when body claims staff',() => {
   const store = sensitiveStore()

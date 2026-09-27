@@ -2,6 +2,8 @@
 
 Action Boardでの活動から本人確認付きのスキルを育て、スタッフによる人材検索・チーム案作成につなげるアイデアを体験できるローカルプロトタイプです。18名の架空データを含みます。Action Board本体や本番データへの変更・接続はありません。
 
+アクションボードとの連携デモは、稲原さんが以前このアプリへの感想でアクションボードとの連携に言及したことを参考に制作しました。具体的な画面や機能は、このリポジトリで示す一案です。
+
 このデモはアイデア共有用のサンプルです。活用するかどうか、また活用する場合の画面・機能・実装方法は、チームの判断で自由に決められます。
 
 ## まず統合デモを開く
@@ -24,6 +26,8 @@ npm run dev
 [本家に寄せたマイページ](http://127.0.0.1:3000/action-board-demo/account)では、レベル・バッジ・ミッション履歴などの後にTalentカードを追加。[アカウント設定の配置例](http://127.0.0.1:3000/action-board-demo/settings)でも既存項目の後にTalent導線を置きました。既存アカウント項目は公式サービスへ未接続の読み取り専用見本です。
 
 統合デモの右上のアバターメニューにも「マイタレント」を追加しました。[マイタレント](http://127.0.0.1:3000/action-board-demo/talent)のカード・メニューは、マイページに合わせた白地・黒い縁取り・ミント色のデザインです。
+
+マイタレントのプロフィールでは、都道府県はアクションボードの登録情報から連携する想定で表示のみとし、市区町村は本人が自由記入します。ローカルデモでは都道府県も架空のサンプル値で、公式アカウントから取得していません。活動可能地域は居住地とは別に本人が設定できます。
 
 スタッフ用の[サポーター検索](http://127.0.0.1:3000/action-board-demo/supporters)、[チーム編成](http://127.0.0.1:3000/action-board-demo/team)、[活動管理](http://127.0.0.1:3000/action-board-demo/activities)も同じデザインに揃え、画面間のメニューを追加しました。スタッフ用デモアカウントに切り替えて操作できます。
 
@@ -66,6 +70,7 @@ npm run dev
 |---|---|---|
 | 保存 | Node.jsサーバーの `.local/talent-v02.json` | Supabase repository |
 | 認証 | 署名HttpOnly cookieのデモ切替、サーバーの本人／スタッフ検証 | Action BoardのSupabase SSR Auth |
+| 居住地域 | 架空の都道府県を表示し、市区町村だけ本人が入力 | 都道府県はAction Boardの `public_user_profiles.address_prefecture` を参照、市区町村はTalent側に保存 |
 | AI・面談 | ローカル辞書・ルール、本人承認、会話保存 | Structured Output provider |
 | 自然文検索 | 条件解析、関連語・推薦・本人設定の意欲、理由表示 | Embedding・検索provider |
 | Team Builder | 役割・人数、重複配置防止、活動条件を考慮 | 外部モデルによる要件構造化 |
@@ -118,6 +123,6 @@ NEXT_DIST_DIR=.next-build npm run build
 node scripts/verify-demo.mjs
 ```
 
-70件のテストで旧版、候補承認、検索、チーム制約、情報分離、権限、Action Board adapter、推薦スキルへのサムアップと統合フローを確認。単独版HTTP確認は24項目、`node scripts/verify-board-demo.mjs` による統合デモ確認は42項目です。
+77件のテストで旧版、候補承認、検索、チーム制約、情報分離、権限、Action Board adapter、推薦スキルへのサムアップ、居住地の都道府県を維持した市区町村編集、統合フローを確認。単独版HTTP確認は24項目、`node scripts/verify-board-demo.mjs` による統合デモ確認は42項目です。
 
 productionビルドをローカルで試す場合だけ、`npm run build` 後に `TALENT_DEMO_ALLOW_PRODUCTION=true npm start` を使用します。公開環境向け設定ではありません。

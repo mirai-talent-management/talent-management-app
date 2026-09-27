@@ -163,7 +163,7 @@ export interface BootstrapData {
   /** Public totals and only the current viewer's own state; voter identities stay server-side. */
   agreementSummaries: Record<string, AgreementSummary>
 }
-export type ProfilePatch = Pick<TalentProfile, 'name' | 'kana' | 'headline' | 'location' | 'bio' | 'email' | 'slack' | 'hoursPerMonth' | 'interests' | 'motivation' | 'experience' | 'workExperience' | 'personalExperience' | 'electionExperience' | 'communityExperience' | 'participation' | 'availabilityDetails' | 'policyInterests' | 'policyAdviceTopics' | 'policyAdvicePerspective'>
+export type ProfilePatch = Pick<TalentProfile, 'name' | 'kana' | 'headline' | 'bio' | 'email' | 'slack' | 'hoursPerMonth' | 'interests' | 'motivation' | 'experience' | 'workExperience' | 'personalExperience' | 'electionExperience' | 'communityExperience' | 'participation' | 'availabilityDetails' | 'policyInterests' | 'policyAdviceTopics' | 'policyAdvicePerspective'> & { municipality: string }
 
 export const SOURCE_LABELS: Record<SkillSource, string> = { self: '本人申告', recommendation: '他者推薦', ai: 'AI発見・本人承認', activity: '活動実績' }
 export const CATEGORY_LABELS: Record<SkillCategory, string> = { professional: '仕事・専門', personal: 'プライベート', election: '選挙活動', community: '平時の活動', policy: '政策分野', strength: '人となり・強み' }

@@ -8,6 +8,7 @@ import { extractSkills } from '../services/skill-extraction-service.ts'
 import { advanceInterview } from '../services/interview-service.ts'
 import { semanticSearch } from '../services/semantic-search-service.ts'
 import { buildTeam } from '../services/team-builder-service.ts'
+import { formatResidenceLocation, splitResidenceLocation } from '../services/supporter-directory.ts'
 
 function staff(actor: Actor) { if (actor.role !== 'staff') throw new TalentError('議員・スタッフのみ利用できます。',403) }
 function ownProfile(store: TalentStore, actor: Actor): TalentProfile {
@@ -32,7 +33,9 @@ export function executeTalentAction(store: TalentStore, actor: Actor, input: unk
       onlyKeys(body,['action','profile'])
       const profile = ownProfile(store,actor)
       const patch = profilePatch(body.profile)
-      Object.assign(profile,patch)
+      const { municipality, ...profileFields } = patch
+      const { prefecture } = splitResidenceLocation(profile.location)
+      Object.assign(profile,profileFields,{location:formatResidenceLocation(prefecture,municipality)})
       profile.availability = [...patch.availabilityDetails.weekdays,...patch.availabilityDetails.timeSlots,...(patch.availabilityDetails.remote ? ['オンライン'] : []),...(patch.availabilityDetails.onsite ? ['現地参加'] : [])]
       return {ok:true}
     }

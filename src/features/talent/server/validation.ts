@@ -1,5 +1,6 @@
 import type { Activity, ProfilePatch, SkillCategory } from '../types.ts'
 import { TalentError } from './errors.ts'
+import { PREFECTURES } from '../services/supporter-directory.ts'
 
 export function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TalentError('入力形式が正しくありません。')
@@ -34,15 +35,17 @@ const participation = ['election_active', 'regular', 'sometimes', 'remote', 'eve
 
 export function profilePatch(value: unknown): ProfilePatch {
   const p = object(value)
-  onlyKeys(p, ['name','kana','headline','location','bio','email','slack','hoursPerMonth','interests','motivation','experience','workExperience','personalExperience','electionExperience','communityExperience','participation','availabilityDetails','policyInterests','policyAdviceTopics','policyAdvicePerspective'])
+  onlyKeys(p, ['name','kana','headline','municipality','bio','email','slack','hoursPerMonth','interests','motivation','experience','workExperience','personalExperience','electionExperience','communityExperience','participation','availabilityDetails','policyInterests','policyAdviceTopics','policyAdvicePerspective'])
   const availability = object(p.availabilityDetails)
   onlyKeys(availability, ['regions','weekdays','timeSlots','remote','onsite'])
   if (!Array.isArray(p.experience) || p.experience.length > 50) throw new TalentError('経験・実績の項目数を確認してください。')
   const email = text(p.email, 'メールアドレス', 320, false)
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new TalentError('メールアドレスの形式を確認してください。')
+  const municipality = text(p.municipality, '市区町村', 100, false)
+  if (PREFECTURES.some(prefecture => municipality.startsWith(prefecture))) throw new TalentError('市区町村には都道府県を含めずに入力してください。')
   return {
     name: text(p.name, '名前', 100), kana: text(p.kana, 'よみがな', 100, false),
-    headline: text(p.headline, 'ひとこと', 200, false), location: text(p.location, '地域', 200, false),
+    headline: text(p.headline, 'ひとこと', 200, false), municipality,
     bio: text(p.bio, '自己紹介', 10000, false), email, slack: text(p.slack, 'Slack', 200, false),
     hoursPerMonth: integer(p.hoursPerMonth, '活動時間', 0, 744), interests: strings(p.interests, '関心'),
     motivation: choice(p.motivation, ['high','medium','low'], 'モチベーション'),

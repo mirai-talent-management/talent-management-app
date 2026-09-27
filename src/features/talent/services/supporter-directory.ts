@@ -10,6 +10,16 @@ export const PREFECTURES = [
   '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
 ] as const
 
+/** The demo keeps a combined display value; the real integration reads the prefecture from Action Board. */
+export function splitResidenceLocation(location: string): { prefecture: string; municipality: string } {
+  const prefecture = PREFECTURES.find(value => location.startsWith(value)) ?? ''
+  return { prefecture, municipality: location.slice(prefecture.length) }
+}
+
+export function formatResidenceLocation(prefecture: string, municipality: string): string {
+  return `${prefecture}${municipality.trim()}`
+}
+
 const compact = (value: string) => value.normalize('NFKC').toLocaleLowerCase('ja').replace(/[\s　]/gu, '')
 
 export function matchesSupporterName(profile: TalentProfile, name: string): boolean {

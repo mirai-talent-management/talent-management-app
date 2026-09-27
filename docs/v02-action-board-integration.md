@@ -39,7 +39,7 @@ v0.1のActivity・Supporter型、活動編集フォーム、Lucide、基本プ�
 追加migrationは `202609220001_talent_v02.sql`。概念を必要な単位にまとめています。
 
 - talent_memberships：管理者が同期するロール
-- talent_profiles / talent_contacts：プロフィールと連絡先の分離
+- talent_profiles / talent_contacts：プロフィールと連絡先の分離。居住地は市区町村だけTalent側で保持
 - talent_skills / talent_evidence：元表現・正規化名・関連語・source・承認後の公開根拠
 - talent_recommendations / talent_suggestions：推薦原文・出典・参照・確信度・承認状態
 - talent_interviews：本人限定の会話と再開状態
@@ -48,6 +48,8 @@ v0.1のActivity・Supporter型、活動編集フォーム、Lucide、基本プ�
 活動可能条件・政策関心・助言できる政策分野はプロフィール内の配列／JSON、助言の立場は本人申告の文章です。将来、taxonomy・外部データソース・活動履歴の専用テーブルを追加可能です。Embeddingは未生成で、モデル・次元・バージョンを持つ索引を承認済みスキルIDへ紐付ける方針です。
 
 本人IDはauth.users.id。本家public_user_profilesにはname/address_prefecture/avatar等があり、private_usersとの重複項目同期は2025-10-25に削除済み。新しい二重同期を仮定しません。本家admin/posting-adminとTalent staffも自動的に同一視せず明示対応します。
+
+居住地の都道府県は `public_user_profiles.address_prefecture` を参照し、マイタレントでは編集させません。市区町村だけを `talent_profiles.municipality` に本人が任意入力します。表示時に両者を組み合わせ、都道府県検索には本家の値を使います。ローカルデモは互換性のため結合済みの `location` を保存しますが、保存APIでは市区町村だけを受け付け、既存の都道府県を維持します。
 
 根拠：[Supabase生成型](https://github.com/team-mirai-volunteer/action-board/blob/1b269081aaee4a145a125af46d5c90b88d9e5a4e/src/lib/types/supabase.ts)、[重複項目削除migration](https://github.com/team-mirai-volunteer/action-board/blob/1b269081aaee4a145a125af46d5c90b88d9e5a4e/supabase/migrations/20251025062103_remove_duplicated_columns_on_private_users.sql)。
 
@@ -78,6 +80,7 @@ Team Builderは人数・担当を構造化し、地域・日時・活動可否�
 1. featureを移植しルート・共通レイアウト・UIへ接続。
 2. デモ認証を検証済みSupabase Authへ交換し、staff権限を照合。
 3. repositoryを追加テーブルへ接続、RLS・RPCをSupabase環境で検証。
+   居住都道府県は本家プロフィールから取得し、Talent側の市区町村入力とは別々に扱う。
 4. achievementsとmissionsを活動記録adapterへ入力し、ユーザーIDを明示対応。
 5. 役割が記録されている場合だけ能力候補にし本人確認へ送る。単なるイベント参加から運営能力を推測しない。
 6. 承認済み情報で検索索引を作る。Slack分析は実行権限・費用上限・監査を設計できた段階で再検討する。

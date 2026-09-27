@@ -7,7 +7,7 @@ import { talentApi, type TalentClient } from '../services/client-api'
 import { TalentAvatar, completeness } from './talent-ui'
 import { TalentIllustration } from './talent-illustration'
 import { SkillAgreementButton } from './skill-agreement-button'
-import { matchesSupporterName, matchesSupporterPrefecture, PREFECTURES } from '../services/supporter-directory'
+import { matchesSupporterName, matchesSupporterPrefecture, PREFECTURES, splitResidenceLocation } from '../services/supporter-directory'
 
 interface SelfWorkspaceProps {
   api?: TalentClient
@@ -53,6 +53,7 @@ export function SelfWorkspace(props: SelfWorkspaceProps) {
 function ProfileEditor({ profile, data, onAction, onNavigate }: SelfWorkspaceProps & { profile: TalentProfile }) {
   const operation = useOperation(), skillOperation = useOperation()
   const [experience, setExperience] = useState(profile.experience)
+  const residence = splitResidenceLocation(profile.location)
   const progress = completeness(profile)
   const pending = data.suggestions.filter(item => item.profileId === profile.id && item.status === 'pending').length
   const recommendations = data.recommendations.filter(item => item.toId === profile.id)
@@ -61,7 +62,7 @@ function ProfileEditor({ profile, data, onAction, onNavigate }: SelfWorkspacePro
     const fields = new FormData(event.currentTarget)
     const value = (name: string) => String(fields.get(name) ?? '').trim()
     const patch: ProfilePatch = {
-      name: value('name'), kana: value('kana'), headline: value('headline'), location: value('location'), bio: value('bio'),
+      name: value('name'), kana: value('kana'), headline: value('headline'), municipality: value('municipality'), bio: value('bio'),
       email: value('email'), slack: value('slack'), hoursPerMonth: Number(fields.get('hoursPerMonth')),
       interests: words(fields.get('interests')), policyInterests: words(fields.get('policyInterests')),
       policyAdviceTopics: words(fields.get('policyAdviceTopics')), policyAdvicePerspective: value('policyAdvicePerspective'), motivation: profile.motivation,
@@ -91,7 +92,9 @@ function ProfileEditor({ profile, data, onAction, onNavigate }: SelfWorkspacePro
             <div className="t-form-grid"><label className="t-field">表示名<input className="t-input" name="name" defaultValue={profile.name} required maxLength={100} /></label><label className="t-field">ふりがな<input className="t-input" name="kana" defaultValue={profile.kana} maxLength={100} /></label></div>
             <label className="t-field">ひとこと紹介<input className="t-input" name="headline" defaultValue={profile.headline} placeholder="例：写真と発信で、活動の魅力を伝えたい" maxLength={200} /></label>
             <label className="t-field">自己紹介・自己PR<textarea className="t-textarea" name="bio" defaultValue={profile.bio} rows={4} maxLength={5000} /></label>
-            <div className="t-form-grid"><label className="t-field">お住まいの地域<input className="t-input" name="location" defaultValue={profile.location} maxLength={100} /></label><label className="t-field">メールアドレス<input className="t-input" type="email" name="email" defaultValue={profile.email} maxLength={254} /></label><label className="t-field">Slackアカウント<input className="t-input" name="slack" defaultValue={profile.slack} maxLength={100} /></label></div>
+            <div className="t-form-grid"><label className="t-field">都道府県（アクションボードから連携）<input className="t-input" value={residence.prefecture || '未設定'} readOnly aria-readonly="true" /></label><label className="t-field">市区町村（マイタレントで入力）<input className="t-input" name="municipality" defaultValue={residence.municipality} placeholder="例：横浜市" maxLength={100} /></label></div>
+            <p className="t-muted">都道府県はデモアカウントの架空情報を表示しています。本番ではアクションボードの登録情報を参照し、市区町村だけをここで登録する想定です。</p>
+            <div className="t-form-grid"><label className="t-field">メールアドレス<input className="t-input" type="email" name="email" defaultValue={profile.email} maxLength={254} /></label><label className="t-field">Slackアカウント<input className="t-input" name="slack" defaultValue={profile.slack} maxLength={100} /></label></div>
           </FormSection>
           <FormSection title="仕事も、暮らしの中の経験も" description="肩書きや資格がなくても大丈夫。実際に担当したこと、続けてきたことを書いてみましょう。">
             <div className="t-form-grid">{([

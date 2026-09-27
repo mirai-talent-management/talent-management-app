@@ -20,7 +20,7 @@ grant execute on function private.talent_is_staff() to authenticated;
 create table public.talent_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   name text not null check (char_length(name) between 1 and 100),
-  kana text not null default '', headline text not null default '', location text not null default '',
+  kana text not null default '', headline text not null default '', municipality text not null default '' check (char_length(municipality) <= 100),
   bio text not null default '' check (char_length(bio) <= 10000),
   interests text[] not null default '{}',
   motivation text not null default 'medium' check (motivation in ('high','medium','low')),
@@ -145,7 +145,7 @@ revoke all on table public.talent_memberships,public.talent_profiles,public.tale
 grant select on table public.talent_memberships,public.talent_profiles,public.talent_contacts,public.talent_evidence,
   public.talent_skills,public.talent_recommendations,public.talent_suggestions,public.talent_interviews,
   public.talent_activities,public.talent_teams to authenticated;
-grant update(name,kana,headline,location,bio,interests,motivation,hours_per_month,experience,work_experience,
+grant update(name,kana,headline,municipality,bio,interests,motivation,hours_per_month,experience,work_experience,
   personal_experience,election_experience,community_experience,participation,availability_details,policy_interests) on public.talent_profiles to authenticated;
 grant update(email,slack) on public.talent_contacts to authenticated;
 grant update(original_text,normalized_name,related_terms,category),delete on public.talent_skills to authenticated;
