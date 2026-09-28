@@ -158,6 +158,6 @@ NEXT_DIST_DIR=.next-build npm run build
 node scripts/verify-demo.mjs
 ```
 
-78件のテストで旧版、候補承認、検索、チーム制約、情報分離、権限、アクションボード連携用adapter、推薦スキルへのサムアップ、居住地の都道府県を維持した市区町村編集、統合フローを確認。単独版HTTP確認は24項目、`node scripts/verify-board-demo.mjs` による統合デモ確認は41項目です。
+78件のテストで旧版、候補承認、検索、チーム制約、情報分離、権限、アクションボード連携用adapter、推薦スキルへのサムアップ、居住地の都道府県を維持した市区町村編集、統合フローを確認。単独版HTTP確認は23項目、`node scripts/verify-board-demo.mjs` による統合デモ確認は41項目です。
 
 productionビルドをローカルで試す場合だけ、`npm run build` 後に `TALENT_DEMO_ALLOW_PRODUCTION=true npm start` を使用します。公開環境向け設定ではありません。
