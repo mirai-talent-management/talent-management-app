@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CLIPS = ROOT / 'docs/demo-video-clips'
+APPROVED_SKILL_SCREEN = ROOT / 'docs/demo-video-assets/02-approved-skill.jpg'
 OUTPUT = ROOT / 'docs/action-board-talent-5-features.mp4'
 FONT = Path('/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc')
 SLIDES = [
@@ -34,7 +35,8 @@ SLIDES = [
      'voice_segments':[(0.8,'マイタレントで、自分の得意と経験を確認します。'),
                        (5.5,'エーアイインタビューで、経験を一つ入力します。'),
                        (15.5,'このデモでは、回答からスキル候補が見つかると、その場で確認できます。'),
-                       (23.0,'候補の根拠と表現を本人が確かめて承認すると、プロフィールに反映されます。')],
+                       (23.0,'候補の根拠と表現を本人が確かめて承認すると、プロフィールに反映されます。'),
+                       (40.5,'承認した初参加者フォローが、得意と経験の一覧に追加されました。')],
      'clip':'02-mytalent.mp4'},
     {'chapter':'03 / 仲間の推薦', 'title':'強みを届ける', 'card_title':'仲間の強みを推薦',
      'body':'仲間を探す →\n推薦 → 本人が確認',
@@ -185,6 +187,39 @@ def make_card_segment(image: Path, name: str, length: float, work: Path) -> Path
         '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', str(segment))
     return segment
 
+def extend_interview_clip(source: Path, work: Path) -> Path:
+    """Finish chapter 02 by showing the approved skill in the real demo UI."""
+    screen = work / '02-approved-skill.png'
+    pointer = work / '02-pointer.png'
+    tail = work / '02-approved-skill-tail.mp4'
+    extended = work / '02-mytalent-with-result.mp4'
+    run('magick', str(APPROVED_SKILL_SCREEN), '-crop', '718x430+32+210', '+repage',
+        '-resize', '1280x768!', '-unsharp', '0x0.6+0.6+0.01', str(screen))
+    run('magick', '-size', '70x82', 'xc:none',
+        '-fill', '#FFFFFF', '-stroke', '#15372D', '-strokewidth', '4',
+        '-draw', 'polygon 5,4 5,68 20,53 30,76 42,70 31,48 57,48',
+        '-resize', '50x66!', str(pointer))
+    run('ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
+        '-loop', '1', '-framerate', '30', '-i', str(screen),
+        '-loop', '1', '-framerate', '30', '-i', str(pointer),
+        '-filter_complex',
+        '[0:v]drawbox=x=30:y=460:w=1200:h=145:color=0x269D72@0.9:t=4:enable=gte(t\\,3)[bg];'
+        '[bg][1:v]overlay='
+        "x='if(lt(t,1),1030,if(lt(t,3),1030-365*(t-1),300))':"
+        "y='if(lt(t,1),210,if(lt(t,3),210+145*(t-1),500))':"
+        'shortest=1,format=yuv420p[v]',
+        '-map', '[v]', '-t', '8', '-c:v', 'libx264', '-preset', 'veryfast',
+        '-crf', '20', '-pix_fmt', 'yuv420p', str(tail))
+    transition = 0.7
+    run('ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
+        '-i', str(source), '-i', str(tail), '-filter_complex',
+        '[0:v]fps=30,format=yuv420p,settb=AVTB,setpts=PTS-STARTPTS[a];'
+        '[1:v]fps=30,format=yuv420p,settb=AVTB,setpts=PTS-STARTPTS[b];'
+        f'[a][b]xfade=transition=fade:duration={transition}:offset={duration(source)-transition:.3f}[v]',
+        '-map', '[v]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20',
+        '-pix_fmt', 'yuv420p', str(extended))
+    return extended
+
 def main() -> None:
     for command in ('magick','ffmpeg','ffprobe','say'):
         if not shutil.which(command):
@@ -194,6 +229,8 @@ def main() -> None:
     for slide in SLIDES:
         if 'clip' in slide and not (CLIPS/slide['clip']).is_file():
             raise FileNotFoundError(CLIPS/slide['clip'])
+    if not APPROVED_SKILL_SCREEN.is_file():
+        raise FileNotFoundError(APPROVED_SKILL_SCREEN)
     with tempfile.TemporaryDirectory(prefix='talent-demo-video-') as tmp:
         work=Path(tmp)
         segments=[]
@@ -236,6 +273,8 @@ def main() -> None:
                 run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(speech),
                     '-af','atempo=0.7,adelay=450|450','-ar','48000',str(voice))
             source=CLIPS/slide['clip'] if 'clip' in slide else None
+            if index == 2 and source:
+                source = extend_interview_clip(source, work)
             operation_duration=duration(source) if source else 4.0
             length=max(duration(voice)+0.8,operation_duration+0.7)
             args=['ffmpeg','-hide_banner','-loglevel','error','-y','-loop','1','-framerate','30','-i',str(still)]
