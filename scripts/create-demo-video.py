@@ -50,6 +50,36 @@ SLIDES = [
      'voice':'この動画はアイデア共有用です。実際の活用や改変は、引き継ぐチームで自由に判断してください。'},
 ]
 
+# Coordinates are on the 900x770 operation recording. Each pointer pauses at the
+# button just before the corresponding captured screen changes.
+POINTER = {
+    '01-mission.mp4': {
+        'path': [(0,700,300),(1.25,240,675),(1.9,240,675),(2.3,450,575),
+                 (3.4,450,575),(4.2,600,300),(6.6,140,490),(7.2,140,490),(9.9,440,500)],
+        'clicks': [(1.9,240,675),(3.4,450,575),(7.2,140,490)],
+    },
+    '02-mytalent.mp4': {
+        'path': [(0,380,50),(1.4,90,145),(1.9,90,145),(3.0,500,400),
+                 (5.2,430,145),(5.8,430,145),(7.0,500,400),(11.5,700,500)],
+        'clicks': [(1.9,90,145),(5.8,430,145)],
+    },
+    '03-search.mp4': {
+        'path': [(0,800,135),(0.5,800,135),(1.3,250,390),(1.7,250,390),
+                 (3.5,790,350),(5.8,330,390),(6.3,330,390),(9.0,700,500)],
+        'clicks': [(0.5,800,135),(1.7,250,390),(6.3,330,390)],
+    },
+    '04-team.mp4': {
+        'path': [(0,220,150),(0.8,250,335),(1.1,250,335),(3.4,480,500),
+                 (5.5,450,470),(5.9,450,470),(6.8,450,430),(9.6,600,430)],
+        'clicks': [(1.1,250,335),(5.9,450,470)],
+    },
+    '05-contact.mp4': {
+        'path': [(0,500,350),(0.7,100,330),(1.1,100,330),(3.8,350,450),
+                 (4.4,350,450),(5.8,760,715),(6.1,760,715),(10.3,600,500)],
+        'clicks': [(1.1,100,330),(4.4,350,450),(6.1,760,715)],
+    },
+}
+
 def run(*args: str) -> None:
     subprocess.run(args, check=True)
 
@@ -82,6 +112,26 @@ def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
             '-gravity','NorthWest','-interline-spacing','16','-annotate',f'+{tx}+{ty}','@'+str(label),str(image))
     return image
 
+def make_pointer_images(work: Path) -> tuple[Path,Path]:
+    cursor=work/'pointer.png'
+    ring=work/'click-ring.png'
+    run('magick','-size','48x64','xc:none','-fill','#FFFFFF','-stroke','#183C32',
+        '-strokewidth','3','-draw',"path 'M 5,4 L 5,49 L 16,38 L 25,58 L 34,54 L 25,34 L 42,32 Z'",str(cursor))
+    run('magick','-size','76x76','xc:none','-fill','none','-stroke','#3DBB9B',
+        '-strokewidth','5','-draw','circle 38,38 38,8',str(ring))
+    return cursor,ring
+
+def pointer_expression(points: list[tuple[float,int,int]], dimension: int) -> str:
+    expression=str(points[-1][dimension])
+    for before,after in reversed(list(zip(points,points[1:]))):
+        start,value=before[0],before[dimension]
+        end,next_value=after[0],after[dimension]
+        slope=(next_value-value)/(end-start)
+        # max/min keeps the pointer at its first coordinate before t=0.
+        expression=(f'if(lt(t,{end:.3f}),{value}+({slope:.5f})*'
+                    f'max(0\,min({end-start:.3f}\,t-{start:.3f})),{expression})')
+    return expression
+
 def main() -> None:
     for command in ('magick','ffmpeg','ffprobe','say'):
         if not shutil.which(command):
@@ -93,6 +143,7 @@ def main() -> None:
             raise FileNotFoundError(CLIPS/slide['clip'])
     with tempfile.TemporaryDirectory(prefix='talent-demo-video-') as tmp:
         work=Path(tmp)
+        cursor,ring=make_pointer_images(work)
         segments=[]
         for index,slide in enumerate(SLIDES):
             still=make_slide(slide,index,work)
@@ -106,11 +157,22 @@ def main() -> None:
             length=max(duration(voice)+0.8,duration(source) if source else 4.0)
             args=['ffmpeg','-hide_banner','-loglevel','error','-y','-loop','1','-framerate','30','-i',str(still)]
             if source:
-                args+=['-i',str(source),'-i',str(voice)]
+                args+=['-i',str(source),'-loop','1','-framerate','30','-i',str(cursor),
+                       '-loop','1','-framerate','30','-i',str(ring),'-i',str(voice)]
+                track=POINTER[slide['clip']]
+                clicks=track['clicks']
                 video=(f'[1:v]fps=30,scale=900:770,setsar=1,tpad=stop_mode=clone:stop_duration={length:.3f},'
-                       f'trim=duration={length:.3f}[screen];[0:v][screen]overlay=x=60:y=170:shortest=1,'
-                       f'fade=t=in:st=0:d=0.25,fade=t=out:st={length-0.35:.3f}:d=0.35[v];')
-                audio_index=2
+                       f'trim=duration={length:.3f}[screen0];'
+                       f'[3:v]split={len(clicks)}'+''.join(f'[ring{n}]' for n in range(len(clicks)))+';')
+                for n,(at,px,py) in enumerate(clicks):
+                    video+=(f'[screen{n}][ring{n}]overlay=x={px-38}:y={py-38}:'
+                            f"enable='between(t,{at:.3f},{at+0.35:.3f})'[screen{n+1}];")
+                x=pointer_expression(track['path'],1)
+                y=pointer_expression(track['path'],2)
+                video+=(f"[screen{len(clicks)}][2:v]overlay=x='{x}':y='{y}':eval=frame[withcursor];"
+                        f'[0:v][withcursor]overlay=x=60:y=170:shortest=1,'
+                        f'fade=t=in:st=0:d=0.25,fade=t=out:st={length-0.35:.3f}:d=0.35[v];')
+                audio_index=4
             else:
                 args+=['-i',str(voice)]
                 video=(f'[0:v]fade=t=in:st=0:d=0.25,'
