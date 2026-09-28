@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CLIPS = ROOT / 'docs/demo-video-clips'
 OUTPUT = ROOT / 'docs/action-board-talent-5-features.mp4'
 FONT = Path('/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc')
-OPERATION_SPEED = 0.8
+DEFAULT_OPERATION_SPEED = 0.8
+SCENE_SPEEDS = {'03-search.mp4': 0.4}  # Half of its previous 0.8x playback.
 SLIDES = [
     {'chapter':'INTRO', 'title':'Action Board × Talent',
      'body':'5つの主な機能を、\n実際の操作画面で紹介します。',
@@ -155,22 +156,23 @@ def main() -> None:
             run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(speech),
                 '-af','atempo=0.7,adelay=450|450','-ar','48000',str(voice))
             source=CLIPS/slide['clip'] if 'clip' in slide else None
-            operation_duration=duration(source)/OPERATION_SPEED if source else 4.0
+            operation_speed=SCENE_SPEEDS.get(slide.get('clip',''),DEFAULT_OPERATION_SPEED)
+            operation_duration=duration(source)/operation_speed if source else 4.0
             length=max(duration(voice)+0.8,operation_duration+0.7)
             args=['ffmpeg','-hide_banner','-loglevel','error','-y','-loop','1','-framerate','30','-i',str(still)]
             if source:
                 args+=['-i',str(source),'-loop','1','-framerate','30','-i',str(cursor),
                        '-loop','1','-framerate','30','-i',str(ring),'-i',str(voice)]
                 track=POINTER[slide['clip']]
-                clicks=[(at/OPERATION_SPEED,px,py) for at,px,py in track['clicks']]
-                video=(f'[1:v]setpts=PTS/{OPERATION_SPEED},fps=30,scale=900:770,setsar=1,'
+                clicks=[(at/operation_speed,px,py) for at,px,py in track['clicks']]
+                video=(f'[1:v]setpts=PTS/{operation_speed},fps=30,scale=900:770,setsar=1,'
                        f'tpad=stop_mode=clone:stop_duration={length:.3f},'
                        f'trim=duration={length:.3f}[screen0];'
                        f'[3:v]split={len(clicks)}'+''.join(f'[ring{n}]' for n in range(len(clicks)))+';')
                 for n,(at,px,py) in enumerate(clicks):
                     video+=(f'[screen{n}][ring{n}]overlay=x={px-38}:y={py-38}:'
                             f"enable='between(t,{at:.3f},{at+0.35:.3f})'[screen{n+1}];")
-                slowed_path=[(at/OPERATION_SPEED,px,py) for at,px,py in track['path']]
+                slowed_path=[(at/operation_speed,px,py) for at,px,py in track['path']]
                 x=pointer_expression(slowed_path,1)
                 y=pointer_expression(slowed_path,2)
                 video+=(f"[screen{len(clicks)}][2:v]overlay=x='{x}':y='{y}':eval=frame[withcursor];"
