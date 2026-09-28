@@ -201,12 +201,12 @@ def main() -> None:
             if index == 1:
                 card = make_card('section', '01', 'サポーター向け機能',
                                  '01 活動の記録   /   02 マイタレント   /   03 仲間の推薦', work)
-                segments.append(make_card_segment(card, 'section-supporter', 3.2, work))
+                segments.append(make_card_segment(card, 'section-supporter', 4.2, work))
             elif index == 4:
                 card = make_card('section', '02',
                                  '議員・党職員・\nエリアサポーター向け機能（予定）',
                                  '04 仲間探し   /   05 チーム編成   /   06 連絡文作成', work)
-                segments.append(make_card_segment(card, 'section-staff', 3.8, work))
+                segments.append(make_card_segment(card, 'section-staff', 4.8, work))
             if 'clip' in slide:
                 chapter = slide['chapter'].split(' / ', 1)[0]
                 card = make_card('chapter', chapter, f'{chapter}  {slide.get("card_title", slide["title"])}',
