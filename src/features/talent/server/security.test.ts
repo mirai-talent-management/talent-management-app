@@ -62,6 +62,20 @@ test('supporter sees only their private candidates/interview and their own conta
   assert.equal(other.profiles.find(item => item.id === s1.id)?.email,'')
   assert.equal(other.profiles.find(item => item.id === s1.id)?.slack,'')
 })
+test('完了したインタビューを本人がやり直しても既存候補は残る',() => {
+  const store = createSeedStore()
+  for (const answer of ['写真撮影が得意です', '一眼レフで撮っています', 'Canvaでバナーを制作しています', '月1回参加できます']) {
+    executeTalentAction(store,s1,{action:'interview.answer',answer})
+  }
+  assert.equal(store.interviews.find(item => item.profileId === s1.id)?.status,'completed')
+  const suggestionIds = store.suggestions.filter(item => item.profileId === s1.id).map(item => item.id)
+  assertStatus(() => executeTalentAction(store,s2,{action:'interview.restart'}),409)
+  executeTalentAction(store,s1,{action:'interview.restart'})
+  assert.equal(store.interviews.some(item => item.profileId === s1.id),false)
+  assert.deepEqual(store.suggestions.filter(item => item.profileId === s1.id).map(item => item.id),suggestionIds)
+  executeTalentAction(store,s1,{action:'interview.answer',answer:''})
+  assert.equal(store.interviews.find(item => item.profileId === s1.id)?.step,0)
+})
 test('Slack由来の旧候補は表示せず、抽出と承認のAPIも停止する',() => {
   const store = sensitiveStore()
   assertStatus(() => executeTalentAction(store,s1,{action:'slack.analyze',text:'音響を担当しました'}),400)

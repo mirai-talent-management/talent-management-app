@@ -113,6 +113,14 @@ export function executeTalentAction(store: TalentStore, actor: Actor, input: unk
       store.suggestions.push(...next.suggestions)
       return {ok:true}
     }
+    case 'interview.restart': {
+      onlyKeys(body,['action'])
+      ownProfile(store,actor)
+      const session = store.interviews.find(item => item.profileId === actor.id)
+      if (session?.status !== 'completed') throw new TalentError('完了したインタビューだけやり直せます。',409)
+      store.interviews = store.interviews.filter(item => item.profileId !== actor.id)
+      return {ok:true}
+    }
     case 'interview.pause': {
       onlyKeys(body,['action'])
       ownProfile(store,actor)

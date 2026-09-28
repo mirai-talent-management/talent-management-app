@@ -3,7 +3,7 @@ import { extractSkills } from './skill-extraction-service.ts'
 
 const firstQuestion = '仕事や趣味、これまでの活動で、得意なことを一つ教えてください。小さな経験でも大丈夫です。'
 
-/** A four-answer local mock interview. Participation willingness is not inferred from abilities. */
+/** A four-answer local mock interview. Ability candidates appear as answers arrive. */
 export function advanceInterview(session: InterviewSession | null, profileId: string, answer: string): { session: InterviewSession; suggestions: SkillSuggestion[] } {
   if (session && session.profileId !== profileId) throw new Error('本人のインタビューだけ再開できます。')
   if (session?.status === 'completed') return { session, suggestions: [] }
@@ -26,9 +26,14 @@ export function advanceInterview(session: InterviewSession | null, profileId: st
   else if (next.step === 3) question = 'できることの確認はここまでです。活動に関わりたい頻度や時間帯があれば教えてください。能力とは分けて扱い、参加意欲を自動登録することはありません。'
   else {
     next.status = 'completed'
-    question = 'ありがとうございます。最初の3つの回答からスキル候補を整理しました。公開前に、ご自身で内容を確認・修正してください。参加の頻度や意欲はプロフィールで別途設定できます。'
+    question = 'ありがとうございます。最初の3つの回答から見つかったスキル候補は「発見候補」で確認できます。公開前に、ご自身で内容を確認・修正してください。参加の頻度や意欲はプロフィールで別途設定できます。'
   }
   next.messages.push({ id: crypto.randomUUID(), role: 'assistant', content: question })
-  const capabilityAnswers = next.messages.filter(message => message.role === 'user').slice(0, 3).map(message => message.content).join('。')
-  return { session: next, suggestions: next.status === 'completed' ? extractSkills(capabilityAnswers, { profileId, origin: 'interview', reference: next.id }) : [] }
+  // The fourth answer is only about participation preferences, never ability.
+  if (next.step === 4) return { session: next, suggestions: [] }
+  const previousAnswers = session.messages.filter(message => message.role === 'user').slice(0, 3).map(message => message.content).join('。')
+  const previousNames = new Set(extractSkills(previousAnswers, { profileId, origin: 'interview' }).map(skill => skill.normalizedName))
+  const suggestions = extractSkills(answer, { profileId, origin: 'interview', reference: next.id })
+    .filter(skill => !previousNames.has(skill.normalizedName))
+  return { session: next, suggestions }
 }
