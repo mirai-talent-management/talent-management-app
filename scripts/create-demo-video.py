@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a narrated demo video with role/chapter cards and five real browser recordings.
+"""Build a narrated demo video with role/chapter cards and six real browser recordings.
 
 Requires macOS say, ImageMagick, and FFmpeg. No network access or API keys.
 """
@@ -18,9 +18,9 @@ OUTPUT = ROOT / 'docs/action-board-talent-5-features.mp4'
 FONT = Path('/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc')
 SLIDES = [
     {'chapter':'INTRO', 'title':'Action Board × Talent',
-     'body':'5つの主な機能を、\n実際の操作画面で紹介します。',
+     'body':'6つの主な機能を、\n実際の操作画面で紹介します。',
      'note':'非公式の統合提案 ・ 架空データ',
-     'voice':'アクションボードとマイタレント。5つの主な機能を、実際の操作画面で紹介します。'},
+     'voice':'アクションボードとマイタレント。6つの主な機能を、実際の操作画面で紹介します。'},
     {'chapter':'01 / 活動の記録', 'title':'活動が経験に',
      'body':'① ミッションを達成\n② スキル候補を見る\n③ 本人が承認する',
      'note':'活動記録から見つかった\n候補は本人が確認',
@@ -36,27 +36,35 @@ SLIDES = [
                        (15.5,'このデモでは、回答からスキル候補が見つかると、その場で確認できます。'),
                        (23.0,'候補の根拠と表現を本人が確かめて承認すると、プロフィールに反映されます。')],
      'clip':'02-mytalent.mp4'},
-    {'chapter':'03 / 仲間探し', 'title':'仲間を探す',
+    {'chapter':'03 / 仲間の推薦', 'title':'強みを届ける', 'card_title':'仲間の強みを推薦',
+     'body':'① 仲間を探す\n② 推薦文を届ける\n③ 本人が確認',
+     'note':'本人の承認前は\n公開されません',
+     'voice_segments':[(0.8,'サポーターは、一緒に活動した仲間の強みを推薦できます。'),
+                       (8.3,'都道府県と名前で相手を探し、活動中に見つけた強みを具体的に書きます。'),
+                       (22.0,'推薦を届けると、本人だけが確認できるスキル候補になります。'),
+                       (39.0,'受け取った本人が候補を確認し、承認した場合だけプロフィールに反映されます。')],
+     'clip':'03-recommend.mp4'},
+    {'chapter':'04 / 仲間探し', 'title':'仲間を探す',
      'body':'① 活動内容を入力\n② 候補と理由を見る\n③ プロフィールを確認',
      'note':'ローカルの辞書・規則を\n使った検索サンプル',
      'voice_segments':[(1.8,'活動の内容を文章で入力して、仲間を探します。'),
                        (11.3,'読み取った条件と、候補になった理由を確認できます。'),
                        (22.0,'プロフィールを開き、得意なことや参加条件を確認します。')],
-     'clip':'03-search.mp4'},
-    {'chapter':'04 / チーム編成', 'title':'チーム案',
+     'clip':'04-search.mp4'},
+    {'chapter':'05 / チーム編成', 'title':'チーム案',
      'body':'① 活動条件を入力\n② 役割別の候補を見る\n③ 理由を確認する',
      'note':'参加・連絡は\n自動確定しません',
      'voice_segments':[(0.8,'活動の場所、時間、必要な役割と人数を入力します。'),
                        (11.2,'候補チームを作ると、役割ごとに人と選定理由が表示されます。'),
                        (19.5,'参加できるかどうかは、本人に確認して人が判断します。')],
-     'clip':'04-team.mp4'},
-    {'chapter':'05 / 連絡文作成', 'title':'連絡文を作る',
+     'clip':'05-team.mp4'},
+    {'chapter':'06 / 連絡文作成', 'title':'連絡文を作る',
      'body':'① 名前で候補を探す\n② 活動を選んで文面作成\n③ デモ送信を確認',
      'note':'架空の宛先を使い\n実際の送信はしません',
      'voice_segments':[(0.8,'名前でサポーターを絞り、プロフィールを確認します。'),
                        (12.0,'連絡方法と活動を選ぶと、相談文の下書きが作られます。'),
                        (20.0,'デモ送信は画面内の確認だけで、実際の連絡は行いません。')],
-     'clip':'05-contact.mp4'},
+     'clip':'06-contact.mp4'},
     {'chapter':'OUTRO', 'title':'アイデア共有用のデモ',
      'body':'活用・設計・改変は、\n引き継ぐチームの判断で自由に。',
      'note':'非公式 ・ 架空データ ・ 本番環境未接続',
@@ -192,16 +200,16 @@ def main() -> None:
         for index,slide in enumerate(SLIDES):
             if index == 1:
                 card = make_card('section', '01', 'サポーター向け機能',
-                                 '01 活動の記録   /   02 マイタレント', work)
+                                 '01 活動の記録   /   02 マイタレント   /   03 仲間の推薦', work)
                 segments.append(make_card_segment(card, 'section-supporter', 3.2, work))
-            elif index == 3:
+            elif index == 4:
                 card = make_card('section', '02',
                                  '議員・党職員・\nエリアサポーター向け機能（予定）',
-                                 '03 仲間探し   /   04 チーム編成   /   05 連絡文作成', work)
+                                 '04 仲間探し   /   05 チーム編成   /   06 連絡文作成', work)
                 segments.append(make_card_segment(card, 'section-staff', 3.8, work))
             if 'clip' in slide:
                 chapter = slide['chapter'].split(' / ', 1)[0]
-                card = make_card('chapter', chapter, f'{chapter}  {slide["title"]}',
+                card = make_card('chapter', chapter, f'{chapter}  {slide.get("card_title", slide["title"])}',
                                  slide['chapter'].split(' / ', 1)[1], work)
                 segments.append(make_card_segment(card, f'chapter-{chapter}', 3.0, work))
             still=make_slide(slide,index,work)
