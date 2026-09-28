@@ -5,9 +5,11 @@ Requires macOS say, ImageMagick, and FFmpeg. No network access or API keys.
 """
 from __future__ import annotations
 import json
+import math
 import shutil
 import subprocess
 import tempfile
+import wave
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,10 +29,10 @@ SLIDES = [
                        (17.0,'公開する内容は、本人が確認して承認します。')],
      'clip':'01-mission.mp4'},
     {'chapter':'02 / マイタレント', 'title':'自分の得意',
-     'body':'① 経験を答える\n② スキル候補を確認\n③ 本人承認でプロフィールへ',
+     'body':'① 経験を答える\n② スキル候補を確認\n③ 本人承認で反映',
      'note':'ローカルの辞書・規則を使う\nMock AIのデモ',
      'voice_segments':[(0.8,'マイタレントで、自分の得意と経験を確認します。'),
-                       (5.5,'AIインタビューで、経験を一つ入力します。'),
+                       (5.5,'エーアイインタビューで、経験を一つ入力します。'),
                        (15.5,'このデモでは、回答からスキル候補が見つかると、その場で確認できます。'),
                        (23.0,'候補の根拠と表現を本人が確かめて承認すると、プロフィールに反映されます。')],
      'clip':'02-mytalent.mp4'},
@@ -68,6 +70,49 @@ def duration(path: Path) -> float:
     result = subprocess.run(['ffprobe','-v','error','-show_entries','format=duration','-of','json',str(path)],
                             capture_output=True,text=True,check=True)
     return float(json.loads(result.stdout)['format']['duration'])
+
+def make_bgm(path: Path, seconds: float) -> None:
+    """A quiet original major-key instrumental, generated locally without samples."""
+    rate = 24000
+    beat = 0.625
+    bar = beat * 4
+    chords = [
+        (60, 64, 67, 71), (55, 59, 62, 67),
+        (57, 60, 64, 67), (53, 57, 60, 64),
+        (60, 64, 67, 71), (55, 59, 62, 67),
+        (53, 57, 60, 64), (55, 59, 62, 67),
+    ]
+    freq = lambda midi: 440.0 * 2 ** ((midi - 69) / 12)
+    chord_freqs = [tuple(freq(note) for note in chord[:3]) for chord in chords]
+    melody_freqs = [tuple(freq(chord[i] + 12) for i in (0, 1, 2, 1)) for chord in chords]
+    total = round(seconds * rate)
+    import array
+    with wave.open(str(path), 'wb') as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(rate)
+        buffer = array.array('h')
+        for index in range(total):
+            t = index / rate
+            bar_index = int(t / bar)
+            local = t - bar_index * bar
+            chord = chord_freqs[bar_index % len(chords)]
+            melody = melody_freqs[bar_index % len(chords)]
+            pad_envelope = min(1.0, local / 0.22, (bar - local) / 0.22)
+            pad = sum(math.sin(2 * math.pi * note * local) for note in chord) / 3
+            beat_index = min(3, int(local / beat))
+            note_time = local - beat_index * beat
+            pluck_envelope = (1 - math.exp(-110 * note_time)) * math.exp(-5.0 * note_time)
+            pluck = math.sin(2 * math.pi * melody[beat_index] * note_time)
+            pluck += 0.22 * math.sin(4 * math.pi * melody[beat_index] * note_time)
+            edge = min(1.0, t / 1.8, (seconds - t) / 1.8)
+            sample = edge * (0.12 * pad_envelope * pad + 0.18 * pluck_envelope * pluck)
+            buffer.append(int(max(-1.0, min(1.0, sample)) * 32767))
+            if len(buffer) >= 24000:
+                output.writeframes(buffer.tobytes())
+                buffer = array.array('h')
+        if buffer:
+            output.writeframes(buffer.tobytes())
 
 def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
     image = work / f'slide-{index:02d}.png'
@@ -155,8 +200,15 @@ def main() -> None:
             segments.append(segment)
         playlist=work/'playlist.txt'
         playlist.write_text(''.join(f"file '{part}'\n" for part in segments),encoding='utf-8')
+        narration=work/'narrated.mp4'
         run('ffmpeg','-hide_banner','-loglevel','error','-y','-f','concat','-safe','0',
-            '-i',str(playlist),'-c','copy','-movflags','+faststart',str(OUTPUT))
+            '-i',str(playlist),'-c','copy',str(narration))
+        bgm=work/'original-bgm.wav'
+        make_bgm(bgm,duration(narration))
+        run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(narration),'-i',str(bgm),
+            '-filter_complex','[1:a]volume=0.20[bg];[0:a][bg]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.9[a]',
+            '-map','0:v','-map','[a]','-c:v','copy','-c:a','aac','-b:a','160k',
+            '-movflags','+faststart',str(OUTPUT))
     print(f'Created {OUTPUT} ({duration(OUTPUT):.1f} seconds)')
 
 if __name__=='__main__':
