@@ -3,7 +3,7 @@ import '../styles.css'
 
 export const metadata: Metadata = {
   title: 'みらいタレントマネジメント | v0.2',
-  description: 'サポーターのスキル・経験を育て、活動と仲間をつなぐTalent Managementプロトタイプ。',
+  description: 'サポーターのスキル・経験を育て、活動と仲間をつなぐマイタレントプロトタイプ。',
   icons: { icon: '/favicon.svg' },
 }
 

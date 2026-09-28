@@ -12,7 +12,7 @@ async function post(path, body, cookie = '', requestOrigin = origin) {
 function check(value, description) { assert.ok(value, description); checks++; console.log(`PASS ${description}`) }
 for (const path of ['/', '/legacy', '/talent/supporters', '/talent/profile', '/talent/interview', '/talent/suggestions', '/talent/recommendations', '/talent/activities', '/talent/team']) {
   const response = await get(path)
-  check(response.status === 200 && (path !== '/' || new URL(response.url).pathname === '/action-board-demo'), path === '/' ? '/ opens the Action Board integration demo' : `${path} responds 200`)
+  check(response.status === 200 && (path !== '/' || new URL(response.url).pathname === '/action-board-demo'), path === '/' ? '/ opens the アクションボード統合デモ' : `${path} responds 200`)
 }
 const response = await get('/api/talent')
 check(response.status === 200 && response.headers.get('cache-control')?.includes('no-store'), 'bootstrap is live and not cached')

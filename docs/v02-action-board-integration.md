@@ -1,4 +1,4 @@
-# v0.2 調査結果・Action Board統合計画
+# v0.2 調査結果・アクションボード統合計画
 
 ## 1. v0.1の構成
 
@@ -8,11 +8,11 @@ Next.js 15 / React 19 / TypeScript / Tailwind 4、npm。App Routerから単一�
 
 2ロールのデモ切替、一覧・詳細・検索、プロフィールとスキル編集、推薦承認、活動登録、タグマッチング、メール／Slack向け連絡導線。ドメインテスト9件を維持しています。
 
-## 3. Action Boardとの技術差分
+## 3. アクションボードとの技術差分
 
-参照対象は公開 `develop` のcommit `1b269081aaee4a145a125af46d5c90b88d9e5a4e`（2026-08-22）。参照用コピーは独立しており、Action Board本体を変更していません。
+参照対象は公開 `develop` のcommit `1b269081aaee4a145a125af46d5c90b88d9e5a4e`（2026-08-22）。参照用コピーは独立しており、アクションボード本体を変更していません。
 
-| 分野 | v0.1 | Action Board参照時点 | v0.2方針 |
+| 分野 | v0.1 | アクションボード参照時点 | v0.2方針 |
 |---|---|---|---|
 | ランタイム | Next 15 / React 19 / npm | Next 16.1.6 / React 19.2 / pnpm 9 | 既存を維持、移植時に揃える |
 | UI | Tailwind 4、独自UI | Tailwind 4、shadcn/Radix、CVA、Lucide | クリーム・ミント、角丸、Lucide |
@@ -39,7 +39,7 @@ v0.1のActivity・Supporter型、活動編集フォーム、Lucide、基本プ�
 追加migrationは `202609220001_talent_v02.sql`。概念を必要な単位にまとめています。
 
 - talent_memberships：管理者が同期するロール
-- talent_profiles / talent_contacts：プロフィールと連絡先の分離。居住地は市区町村だけTalent側で保持
+- talent_profiles / talent_contacts：プロフィールと連絡先の分離。居住地は市区町村だけマイタレント側で保持
 - talent_skills / talent_evidence：元表現・正規化名・関連語・source・承認後の公開根拠
 - talent_recommendations / talent_suggestions：推薦原文・出典・参照・確信度・承認状態
 - talent_interviews：本人限定の会話と再開状態
@@ -75,12 +75,12 @@ UI → API → 認証・入力検証 → action → service → repository。外
 
 Team Builderは人数・担当を構造化し、地域・日時・活動可否を確認、重複配置を防止します。相性設定は今回の画面・API・新規DBスキーマ・編成処理には含めません。人間関係への影響と編成結果からの推測リスクを検討する将来案です。
 
-## 9. Action Board統合方針
+## 9. アクションボード統合方針
 
 1. featureを移植しルート・共通レイアウト・UIへ接続。
 2. デモ認証を検証済みSupabase Authへ交換し、staff権限を照合。
 3. repositoryを追加テーブルへ接続、RLS・RPCをSupabase環境で検証。
-   居住都道府県は本家プロフィールから取得し、Talent側の市区町村入力とは別々に扱う。
+   居住都道府県は本家プロフィールから取得し、マイタレント側の市区町村入力とは別々に扱う。
 4. achievementsとmissionsを活動記録adapterへ入力し、ユーザーIDを明示対応。
 5. 役割が記録されている場合だけ能力候補にし本人確認へ送る。単なるイベント参加から運営能力を推測しない。
 6. 承認済み情報で検索索引を作る。Slack分析は実行権限・費用上限・監査を設計できた段階で再検討する。
@@ -96,10 +96,10 @@ admin clientはRLSを迂回するため、action認可・公開DTOを削除し�
 | C | 9つのデモ体験 | 実装済み |
 | D | 回帰・サービス・権限・HTTP・build確認 | 実施。画面目視はmacOS操作権限不足で未完了 |
 | E | Supabase実接続、実ログイン、RLS結合試験 | 今回のデモ外 |
-| F | Action Board組込、外部AI/Embedding接続。Slack分析は費用・権限設計後に別途判断 | 将来 |
+| F | アクションボード組込、外部AI/Embedding接続。Slack分析は費用・権限設計後に別途判断 | 将来 |
 
 ## 11. 今回のデモ範囲
 
-9つの画面体験をローカルサンプルで提供。実送信、実Auth、クラウドDB、外部LLM、Embedding、実Slack収集、実Action Board同期、参加自動確定は今回対象外です。
+9つの画面体験をローカルサンプルで提供。実送信、実Auth、クラウドDB、外部LLM、Embedding、実Slack収集、実アクションボード同期、参加自動確定は今回対象外です。
 
 単体テスト57件、HTTPチェック24項目。型検査・production buildも確認。実データに移る前にはSupabaseでのRLS・トランザクション検証と、ブラウザで保存・承認・再開・端末幅の確認が必要です。
