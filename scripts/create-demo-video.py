@@ -15,6 +15,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CLIPS = ROOT / 'docs/demo-video-clips'
 APPROVED_SKILL_SCREEN = ROOT / 'docs/demo-video-assets/02-approved-skill.jpg'
+# SVG exports of the app's TalentIllustration scenes, reused on selected chapter cards.
+CARD_ART = {
+    '01': ROOT / 'docs/demo-video-assets/01-poster.svg',
+    '03': ROOT / 'docs/demo-video-assets/03-praise.svg',
+    '04': ROOT / 'docs/demo-video-assets/04-search.svg',
+    '05': ROOT / 'docs/demo-video-assets/05-people.svg',
+}
 OUTPUT = ROOT / 'docs/action-board-talent-5-features.mp4'
 FONT = Path('/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc')
 SLIDES = [
@@ -158,6 +165,14 @@ def make_card(kind: str, number: str, title: str, subtitle: str, work: Path) -> 
         '-draw', 'roundrectangle 100,105 1820,970 36,36', str(image))
     run('magick', str(image), '-fill', '#37AA77',
         '-draw', 'roundrectangle 175,195 189,365 7,7', str(image))
+    if kind == 'chapter' and number in CARD_ART:
+        artwork = work / f'chapter-art-{number}.png'
+        run('magick', '-background', 'none', str(CARD_ART[number]),
+            '-resize', '560x336', str(artwork))
+        run('magick', str(image), '-fill', '#E7F3EA',
+            '-draw', 'roundrectangle 1100,300 1750,800 38,38', str(image))
+        run('magick', str(image), str(artwork), '-geometry', '+1145+382',
+            '-composite', str(image))
     long_section = kind == 'section' and number == '02'
     labels = [
         (f'{kind}-eyebrow-{number}', f'アクションボード×マイタレント  /  {"対象者" if kind == "section" else "主な機能"}', 225, 205, 31, '#537668'),
@@ -231,6 +246,9 @@ def main() -> None:
             raise FileNotFoundError(CLIPS/slide['clip'])
     if not APPROVED_SKILL_SCREEN.is_file():
         raise FileNotFoundError(APPROVED_SKILL_SCREEN)
+    for artwork in CARD_ART.values():
+        if not artwork.is_file():
+            raise FileNotFoundError(artwork)
     with tempfile.TemporaryDirectory(prefix='talent-demo-video-') as tmp:
         work=Path(tmp)
         segments=[]
