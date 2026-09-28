@@ -15,7 +15,7 @@ CLIPS = ROOT / 'docs/demo-video-clips'
 OUTPUT = ROOT / 'docs/action-board-talent-5-features.mp4'
 FONT = Path('/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc')
 DEFAULT_OPERATION_SPEED = 0.8
-SCENE_SPEEDS = {'03-search.mp4': 0.4}  # Half of its previous 0.8x playback.
+SCENE_SPEEDS = {'03-search.mp4': 1.0}  # This chapter was recorded at the intended viewing pace.
 SLIDES = [
     {'chapter':'INTRO', 'title':'Action Board × Talent',
      'body':'5つの主な機能を、\n実際の操作画面で紹介します。',
@@ -31,10 +31,13 @@ SLIDES = [
      'note':'インタビューは外部AIを使わない Mock AI',
      'voice':'マイタレントでは、経験や得意、活動できる条件を登録できます。インタビューで、自分の強みを整理することもできます。',
      'clip':'02-mytalent.mp4'},
-    {'chapter':'03 / 仲間探し', 'title':'自然な言葉で検索',
-     'body':'活動内容を文章で入力し、\n候補とその理由、プロフィールを確認。',
-     'note':'検索はローカルの辞書・規則によるサンプル',
+    {'chapter':'03 / 仲間探し', 'title':'仲間を探す',
+     'body':'① 活動内容を入力\n② 候補と理由を見る\n③ プロフィールを確認',
+     'note':'ローカルの辞書・規則を\n使った検索サンプル',
      'voice':'活動内容を自然な文章で入力すると、候補と、その理由を確認できます。プロフィールを開いて、得意や参加条件も見られます。',
+     'voice_segments':[(1.8,'活動の内容を文章で入力して、仲間を探します。'),
+                       (11.3,'読み取った条件と、候補になった理由を確認できます。'),
+                       (22.0,'プロフィールを開き、得意なことや参加条件を確認します。')],
      'clip':'03-search.mp4'},
     {'chapter':'04 / チーム編成', 'title':'活動に合うチーム案',
      'body':'日時・場所・役割・人数から提案。\n理由を見て、人が判断します。',
@@ -65,11 +68,6 @@ POINTER = {
                  (5.2,430,145),(5.8,430,145),(7.0,500,400),(11.5,700,500)],
         'clicks': [(1.9,90,145),(5.8,430,145)],
     },
-    '03-search.mp4': {
-        'path': [(0,800,135),(0.5,800,135),(1.3,250,390),(1.7,250,390),
-                 (3.5,790,350),(5.8,330,390),(6.3,330,390),(9.0,700,500)],
-        'clicks': [(0.5,800,135),(1.7,250,390),(6.3,330,390)],
-    },
     '04-team.mp4': {
         'path': [(0,220,150),(0.8,250,335),(1.1,250,335),(3.4,480,500),
                  (5.5,450,470),(5.9,450,470),(6.8,450,430),(9.6,600,430)],
@@ -93,7 +91,13 @@ def duration(path: Path) -> float:
 def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
     image = work / f'slide-{index:02d}.png'
     run('magick','-size','1920x1080','xc:#F7F8F3',str(image))
-    if 'clip' in slide:
+    if slide.get('clip') == '03-search.mp4':
+        for color,shape in [('#FFFFFF','roundrectangle 50,120 1530,1010 16,16'),
+                            ('#DDE8E0','roundrectangle 1550,120 1870,1000 24,24'),
+                            ('#FFFFFF','roundrectangle 1560,130 1860,990 18,18')]:
+            run('magick',str(image),'-fill',color,'-draw',shape,str(image))
+        x,ys,title_size,body_size=1585,(205,300,445,820),38,25
+    elif 'clip' in slide:
         for color,shape in [('#FFFFFF','roundrectangle 50,160 970,950 16,16'),
                             ('#DDE8E0','roundrectangle 1020,160 1870,940 24,24'),
                             ('#FFFFFF','roundrectangle 1030,170 1860,930 18,18')]:
@@ -105,7 +109,7 @@ def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
     labels=[('chapter',slide['chapter'],x,ys[0],27,'#537668'),
             ('title',slide['title'],x,ys[1],title_size,'#182F27'),
             ('body',slide['body'],x,ys[2],body_size,'#334A40'),
-            ('note',slide['note'],x,ys[3],28,'#557264'),
+            ('note',slide['note'],x,ys[3],20 if slide.get('clip') == '03-search.mp4' else 28,'#557264'),
             ('footer','Action Board × Talent  |  非公式ローカル統合デモ  |  すべて架空データ',70,1015,22,'#617468')]
     for name,value,tx,ty,size,color in labels:
         label=work/f'{name}-{index:02d}.txt'
@@ -149,18 +153,42 @@ def main() -> None:
         segments=[]
         for index,slide in enumerate(SLIDES):
             still=make_slide(slide,index,work)
-            speech=work/f'speech-{index:02d}.aiff'
             voice=work/f'voice-{index:02d}.wav'
-            run('say','-v','Kyoko','-r','195','-o',str(speech),slide['voice'])
-            # Audio runs at precisely 0.7 times the prior video's speaking speed.
-            run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(speech),
-                '-af','atempo=0.7,adelay=450|450','-ar','48000',str(voice))
+            if 'voice_segments' in slide:
+                parts=[]
+                for part_index,(at,words) in enumerate(slide['voice_segments']):
+                    speech=work/f'speech-{index:02d}-{part_index}.aiff'
+                    part=work/f'voice-{index:02d}-{part_index}.wav'
+                    run('say','-v','Kyoko','-r','195','-o',str(speech),words)
+                    run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(speech),
+                        '-af',f'atempo=0.7,adelay={round(at*1000)}:all=1',
+                        '-ar','48000',str(part))
+                    parts.append(part)
+                inputs=[item for part in parts for item in ('-i',str(part))]
+                mix=''.join(f'[{n}:a]' for n in range(len(parts)))
+                run('ffmpeg','-hide_banner','-loglevel','error','-y',*inputs,
+                    '-filter_complex',f'{mix}amix=inputs={len(parts)}:duration=longest:normalize=0[a]',
+                    '-map','[a]',str(voice))
+            else:
+                speech=work/f'speech-{index:02d}.aiff'
+                run('say','-v','Kyoko','-r','195','-o',str(speech),slide['voice'])
+                # Audio runs at precisely 0.7 times the prior video's speaking speed.
+                run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(speech),
+                    '-af','atempo=0.7,adelay=450|450','-ar','48000',str(voice))
             source=CLIPS/slide['clip'] if 'clip' in slide else None
             operation_speed=SCENE_SPEEDS.get(slide.get('clip',''),DEFAULT_OPERATION_SPEED)
             operation_duration=duration(source)/operation_speed if source else 4.0
             length=max(duration(voice)+0.8,operation_duration+0.7)
             args=['ffmpeg','-hide_banner','-loglevel','error','-y','-loop','1','-framerate','30','-i',str(still)]
-            if source:
+            if slide.get('clip') == '03-search.mp4':
+                args+=['-i',str(source),'-i',str(voice)]
+                video=(f'[1:v]fps=30,scale=1450:870,setsar=1,'
+                       f'tpad=stop_mode=clone:stop_duration={length:.3f},'
+                       f'trim=duration={length:.3f}[screen];'
+                       f'[0:v][screen]overlay=x=60:y=135:shortest=1,'
+                       f'fade=t=in:st=0:d=0.25,fade=t=out:st={length-0.35:.3f}:d=0.35[v];')
+                audio_index=2
+            elif source:
                 args+=['-i',str(source),'-loop','1','-framerate','30','-i',str(cursor),
                        '-loop','1','-framerate','30','-i',str(ring),'-i',str(voice)]
                 track=POINTER[slide['clip']]
