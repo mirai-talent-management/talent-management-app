@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a narrated demo video from five recordings of actual browser operation.
+"""Build a narrated demo video with role/chapter cards and five real browser recordings.
 
 Requires macOS say, ImageMagick, and FFmpeg. No network access or API keys.
 """
@@ -138,6 +138,45 @@ def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
             '-gravity','NorthWest','-interline-spacing','16','-annotate',f'+{tx}+{ty}','@'+str(label),str(image))
     return image
 
+def make_card(kind: str, number: str, title: str, subtitle: str, work: Path) -> Path:
+    image = work / f'{kind}-{number}.png'
+    background = '#E7F3EA' if kind == 'section' else '#F7F8F3'
+    run('magick', '-size', '1920x1080', f'xc:{background}', str(image))
+    run('magick', str(image), '-fill', '#FFFFFF',
+        '-draw', 'roundrectangle 100,105 1820,970 36,36', str(image))
+    run('magick', str(image), '-fill', '#37AA77',
+        '-draw', 'roundrectangle 175,195 189,365 7,7', str(image))
+    long_section = kind == 'section' and number == '02'
+    labels = [
+        (f'{kind}-eyebrow-{number}', f'Action Board × Talent  /  {"対象者" if kind == "section" else "主な機能"}', 225, 205, 31, '#537668'),
+        (f'{kind}-title-{number}', title, 225, 365 if long_section else 405,
+         64 if long_section else 82, '#182F27'),
+        (f'{kind}-subtitle-{number}', subtitle, 225, 695 if long_section else 640,
+         34 if long_section else 40, '#426455'),
+        (f'{kind}-footer-{number}', '非公式ローカル統合デモ  |  すべて架空データ',
+         225, 880, 25, '#617468'),
+    ]
+    for name, value, x, y, size, color in labels:
+        label = work / f'{name}.txt'
+        label.write_text(value, encoding='utf-8')
+        run('magick', str(image), '-font', str(FONT), '-pointsize', str(size),
+            '-fill', color, '-gravity', 'NorthWest', '-interline-spacing', '13',
+            '-annotate', f'+{x}+{y}', '@' + str(label), str(image))
+    return image
+
+def make_card_segment(image: Path, name: str, length: float, work: Path) -> Path:
+    segment = work / f'{name}.mp4'
+    run('ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
+        '-loop', '1', '-framerate', '30', '-i', str(image),
+        '-f', 'lavfi', '-i', 'anullsrc=channel_layout=mono:sample_rate=48000',
+        '-filter_complex',
+        f'[0:v]fade=t=in:st=0:d=0.3:color=white,'
+        f'fade=t=out:st={length-0.3:.3f}:d=0.3:color=white[v]',
+        '-map', '[v]', '-map', '1:a', '-t', f'{length:.3f}',
+        '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '22', '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', str(segment))
+    return segment
+
 def main() -> None:
     for command in ('magick','ffmpeg','ffprobe','say'):
         if not shutil.which(command):
@@ -151,6 +190,20 @@ def main() -> None:
         work=Path(tmp)
         segments=[]
         for index,slide in enumerate(SLIDES):
+            if index == 1:
+                card = make_card('section', '01', 'サポーター向け機能',
+                                 '01 活動の記録   /   02 マイタレント', work)
+                segments.append(make_card_segment(card, 'section-supporter', 3.2, work))
+            elif index == 3:
+                card = make_card('section', '02',
+                                 '議員・党職員・\nエリアサポーター向け機能（予定）',
+                                 '03 仲間探し   /   04 チーム編成   /   05 連絡文作成', work)
+                segments.append(make_card_segment(card, 'section-staff', 3.8, work))
+            if 'clip' in slide:
+                chapter = slide['chapter'].split(' / ', 1)[0]
+                card = make_card('chapter', chapter, f'{chapter}  {slide["title"]}',
+                                 slide['chapter'].split(' / ', 1)[1], work)
+                segments.append(make_card_segment(card, f'chapter-{chapter}', 3.0, work))
             still=make_slide(slide,index,work)
             voice=work/f'voice-{index:02d}.wav'
             if 'voice_segments' in slide:
