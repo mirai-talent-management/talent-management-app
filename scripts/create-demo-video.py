@@ -14,71 +14,51 @@ ROOT = Path(__file__).resolve().parents[1]
 CLIPS = ROOT / 'docs/demo-video-clips'
 OUTPUT = ROOT / 'docs/action-board-talent-5-features.mp4'
 FONT = Path('/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc')
-DEFAULT_OPERATION_SPEED = 0.8
-SCENE_SPEEDS = {'03-search.mp4': 1.0}  # This chapter was recorded at the intended viewing pace.
 SLIDES = [
     {'chapter':'INTRO', 'title':'Action Board × Talent',
      'body':'5つの主な機能を、\n実際の操作画面で紹介します。',
      'note':'非公式の統合提案 ・ 架空データ',
      'voice':'アクションボードとマイタレント。5つの主な機能を、実際の操作画面で紹介します。'},
-    {'chapter':'01 / 活動からスキルへ', 'title':'活動が、経験になる',
-     'body':'ミッション達成を記録すると、\n活動からスキル候補が見つかります。\n公開する内容は本人が決めます。',
-     'note':'活動とスキル画面の実操作',
-     'voice':'ミッションの達成を記録すると、活動の経験からスキル候補が見つかります。公開する内容は、本人が確認して決めます。',
+    {'chapter':'01 / 活動の記録', 'title':'活動が経験に',
+     'body':'① ミッションを達成\n② スキル候補を見る\n③ 本人が承認する',
+     'note':'活動記録から見つかった\n候補は本人が確認',
+     'voice_segments':[(0.8,'サンプルのミッションを開き、今回担当した役割を選びます。'),
+                       (8.6,'達成を記録すると、担当経験がスキル候補として見つかります。'),
+                       (17.0,'公開する内容は、本人が確認して承認します。')],
      'clip':'01-mission.mp4'},
-    {'chapter':'02 / マイタレント', 'title':'自分の得意を登録',
-     'body':'経験や得意、活動できる条件を登録。\nインタビューで強みを整理します。',
-     'note':'インタビューは外部AIを使わない Mock AI',
-     'voice':'マイタレントでは、経験や得意、活動できる条件を登録できます。インタビューで、自分の強みを整理することもできます。',
+    {'chapter':'02 / マイタレント', 'title':'自分の得意',
+     'body':'① 得意・経験を確認\n② プロフィールを編集\n③ 会話から強みを発見',
+     'note':'インタビューは\n外部AIを使わない Mock AI',
+     'voice_segments':[(0.8,'マイタレントで、プロフィールと登録済みの得意を確認します。'),
+                       (12.0,'次に、会話から経験をふり返るインタビューを始めます。'),
+                       (20.5,'活動での経験を入力すると、次の質問が表示されます。')],
      'clip':'02-mytalent.mp4'},
     {'chapter':'03 / 仲間探し', 'title':'仲間を探す',
      'body':'① 活動内容を入力\n② 候補と理由を見る\n③ プロフィールを確認',
      'note':'ローカルの辞書・規則を\n使った検索サンプル',
-     'voice':'活動内容を自然な文章で入力すると、候補と、その理由を確認できます。プロフィールを開いて、得意や参加条件も見られます。',
      'voice_segments':[(1.8,'活動の内容を文章で入力して、仲間を探します。'),
                        (11.3,'読み取った条件と、候補になった理由を確認できます。'),
                        (22.0,'プロフィールを開き、得意なことや参加条件を確認します。')],
      'clip':'03-search.mp4'},
-    {'chapter':'04 / チーム編成', 'title':'活動に合うチーム案',
-     'body':'日時・場所・役割・人数から提案。\n理由を見て、人が判断します。',
-     'note':'自動確定・自動連絡は行いません',
-     'voice':'活動の日時や場所、必要な役割と人数から、チーム案を作れます。役割ごとの候補と理由を見て、最後は人が判断します。',
+    {'chapter':'04 / チーム編成', 'title':'チーム案',
+     'body':'① 活動条件を入力\n② 役割別の候補を見る\n③ 理由を確認する',
+     'note':'参加・連絡は\n自動確定しません',
+     'voice_segments':[(0.8,'活動の場所、時間、必要な役割と人数を入力します。'),
+                       (11.2,'候補チームを作ると、役割ごとに人と選定理由が表示されます。'),
+                       (19.5,'参加できるかどうかは、本人に確認して人が判断します。')],
      'clip':'04-team.mp4'},
-    {'chapter':'05 / 連絡文作成', 'title':'声をかける文面を作る',
-     'body':'メールや Slack 向けの文面を作成。\n活動の相談を始められます。',
-     'note':'デモでは実際の送信を行いません',
-     'voice':'候補のプロフィールから、メールやスラック向けの連絡文を作れます。このデモでは、実際の送信は行いません。',
+    {'chapter':'05 / 連絡文作成', 'title':'連絡文を作る',
+     'body':'① 名前で候補を探す\n② 活動を選んで文面作成\n③ デモ送信を確認',
+     'note':'架空の宛先を使い\n実際の送信はしません',
+     'voice_segments':[(0.8,'名前でサポーターを絞り、プロフィールを確認します。'),
+                       (12.0,'連絡方法と活動を選ぶと、相談文の下書きが作られます。'),
+                       (20.0,'デモ送信は画面内の確認だけで、実際の連絡は行いません。')],
      'clip':'05-contact.mp4'},
     {'chapter':'OUTRO', 'title':'アイデア共有用のデモ',
      'body':'活用・設計・改変は、\n引き継ぐチームの判断で自由に。',
      'note':'非公式 ・ 架空データ ・ 本番環境未接続',
      'voice':'この動画はアイデア共有用です。実際の活用や改変は、引き継ぐチームで自由に判断してください。'},
 ]
-
-# Coordinates are on the 900x770 operation recording. Each pointer pauses at the
-# button just before the corresponding captured screen changes.
-POINTER = {
-    '01-mission.mp4': {
-        'path': [(0,700,300),(1.25,240,675),(1.9,240,675),(2.3,450,575),
-                 (3.4,450,575),(4.2,600,300),(6.6,140,490),(7.2,140,490),(9.9,440,500)],
-        'clicks': [(1.9,240,675),(3.4,450,575),(7.2,140,490)],
-    },
-    '02-mytalent.mp4': {
-        'path': [(0,380,50),(1.4,90,145),(1.9,90,145),(3.0,500,400),
-                 (5.2,430,145),(5.8,430,145),(7.0,500,400),(11.5,700,500)],
-        'clicks': [(1.9,90,145),(5.8,430,145)],
-    },
-    '04-team.mp4': {
-        'path': [(0,220,150),(0.8,250,335),(1.1,250,335),(3.4,480,500),
-                 (5.5,450,470),(5.9,450,470),(6.8,450,430),(9.6,600,430)],
-        'clicks': [(1.1,250,335),(5.9,450,470)],
-    },
-    '05-contact.mp4': {
-        'path': [(0,500,350),(0.7,100,330),(1.1,100,330),(3.8,350,450),
-                 (4.4,350,450),(5.8,760,715),(6.1,760,715),(10.3,600,500)],
-        'clicks': [(1.1,100,330),(4.4,350,450),(6.1,760,715)],
-    },
-}
 
 def run(*args: str) -> None:
     subprocess.run(args, check=True)
@@ -91,25 +71,19 @@ def duration(path: Path) -> float:
 def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
     image = work / f'slide-{index:02d}.png'
     run('magick','-size','1920x1080','xc:#F7F8F3',str(image))
-    if slide.get('clip') == '03-search.mp4':
+    if 'clip' in slide:
         for color,shape in [('#FFFFFF','roundrectangle 50,120 1530,1010 16,16'),
                             ('#DDE8E0','roundrectangle 1550,120 1870,1000 24,24'),
                             ('#FFFFFF','roundrectangle 1560,130 1860,990 18,18')]:
             run('magick',str(image),'-fill',color,'-draw',shape,str(image))
         x,ys,title_size,body_size=1585,(205,300,445,820),38,25
-    elif 'clip' in slide:
-        for color,shape in [('#FFFFFF','roundrectangle 50,160 970,950 16,16'),
-                            ('#DDE8E0','roundrectangle 1020,160 1870,940 24,24'),
-                            ('#FFFFFF','roundrectangle 1030,170 1860,930 18,18')]:
-            run('magick',str(image),'-fill',color,'-draw',shape,str(image))
-        x,ys,title_size,body_size=1080,(240,355,540,827),56,36
     else:
         run('magick',str(image),'-fill','#DDEFE4','-draw','roundrectangle 90,120 1830,960 34,34',str(image))
         x,ys,title_size,body_size=180,(245,355,555,822),82,48
     labels=[('chapter',slide['chapter'],x,ys[0],27,'#537668'),
             ('title',slide['title'],x,ys[1],title_size,'#182F27'),
             ('body',slide['body'],x,ys[2],body_size,'#334A40'),
-            ('note',slide['note'],x,ys[3],20 if slide.get('clip') == '03-search.mp4' else 28,'#557264'),
+            ('note',slide['note'],x,ys[3],20 if 'clip' in slide else 28,'#557264'),
             ('footer','Action Board × Talent  |  非公式ローカル統合デモ  |  すべて架空データ',70,1015,22,'#617468')]
     for name,value,tx,ty,size,color in labels:
         label=work/f'{name}-{index:02d}.txt'
@@ -117,26 +91,6 @@ def make_slide(slide: dict[str,str], index: int, work: Path) -> Path:
         run('magick',str(image),'-font',str(FONT),'-pointsize',str(size),'-fill',color,
             '-gravity','NorthWest','-interline-spacing','16','-annotate',f'+{tx}+{ty}','@'+str(label),str(image))
     return image
-
-def make_pointer_images(work: Path) -> tuple[Path,Path]:
-    cursor=work/'pointer.png'
-    ring=work/'click-ring.png'
-    run('magick','-size','48x64','xc:none','-fill','#FFFFFF','-stroke','#183C32',
-        '-strokewidth','3','-draw',"path 'M 5,4 L 5,49 L 16,38 L 25,58 L 34,54 L 25,34 L 42,32 Z'",str(cursor))
-    run('magick','-size','76x76','xc:none','-fill','none','-stroke','#3DBB9B',
-        '-strokewidth','5','-draw','circle 38,38 38,8',str(ring))
-    return cursor,ring
-
-def pointer_expression(points: list[tuple[float,int,int]], dimension: int) -> str:
-    expression=str(points[-1][dimension])
-    for before,after in reversed(list(zip(points,points[1:]))):
-        start,value=before[0],before[dimension]
-        end,next_value=after[0],after[dimension]
-        slope=(next_value-value)/(end-start)
-        # max/min keeps the pointer at its first coordinate before t=0.
-        expression=(f'if(lt(t,{end:.3f}),{value}+({slope:.5f})*'
-                    f'max(0\,min({end-start:.3f}\,t-{start:.3f})),{expression})')
-    return expression
 
 def main() -> None:
     for command in ('magick','ffmpeg','ffprobe','say'):
@@ -149,7 +103,6 @@ def main() -> None:
             raise FileNotFoundError(CLIPS/slide['clip'])
     with tempfile.TemporaryDirectory(prefix='talent-demo-video-') as tmp:
         work=Path(tmp)
-        cursor,ring=make_pointer_images(work)
         segments=[]
         for index,slide in enumerate(SLIDES):
             still=make_slide(slide,index,work)
@@ -176,41 +129,22 @@ def main() -> None:
                 run('ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(speech),
                     '-af','atempo=0.7,adelay=450|450','-ar','48000',str(voice))
             source=CLIPS/slide['clip'] if 'clip' in slide else None
-            operation_speed=SCENE_SPEEDS.get(slide.get('clip',''),DEFAULT_OPERATION_SPEED)
-            operation_duration=duration(source)/operation_speed if source else 4.0
+            operation_duration=duration(source) if source else 4.0
             length=max(duration(voice)+0.8,operation_duration+0.7)
             args=['ffmpeg','-hide_banner','-loglevel','error','-y','-loop','1','-framerate','30','-i',str(still)]
-            if slide.get('clip') == '03-search.mp4':
+            if source:
                 args+=['-i',str(source),'-i',str(voice)]
                 video=(f'[1:v]fps=30,scale=1450:870,setsar=1,'
                        f'tpad=stop_mode=clone:stop_duration={length:.3f},'
                        f'trim=duration={length:.3f}[screen];'
                        f'[0:v][screen]overlay=x=60:y=135:shortest=1,'
-                       f'fade=t=in:st=0:d=0.25,fade=t=out:st={length-0.35:.3f}:d=0.35[v];')
+                       f'fade=t=in:st=0:d=0.4:color=white,'
+                       f'fade=t=out:st={length-0.45:.3f}:d=0.45:color=white[v];')
                 audio_index=2
-            elif source:
-                args+=['-i',str(source),'-loop','1','-framerate','30','-i',str(cursor),
-                       '-loop','1','-framerate','30','-i',str(ring),'-i',str(voice)]
-                track=POINTER[slide['clip']]
-                clicks=[(at/operation_speed,px,py) for at,px,py in track['clicks']]
-                video=(f'[1:v]setpts=PTS/{operation_speed},fps=30,scale=900:770,setsar=1,'
-                       f'tpad=stop_mode=clone:stop_duration={length:.3f},'
-                       f'trim=duration={length:.3f}[screen0];'
-                       f'[3:v]split={len(clicks)}'+''.join(f'[ring{n}]' for n in range(len(clicks)))+';')
-                for n,(at,px,py) in enumerate(clicks):
-                    video+=(f'[screen{n}][ring{n}]overlay=x={px-38}:y={py-38}:'
-                            f"enable='between(t,{at:.3f},{at+0.35:.3f})'[screen{n+1}];")
-                slowed_path=[(at/operation_speed,px,py) for at,px,py in track['path']]
-                x=pointer_expression(slowed_path,1)
-                y=pointer_expression(slowed_path,2)
-                video+=(f"[screen{len(clicks)}][2:v]overlay=x='{x}':y='{y}':eval=frame[withcursor];"
-                        f'[0:v][withcursor]overlay=x=60:y=170:shortest=1,'
-                        f'fade=t=in:st=0:d=0.25,fade=t=out:st={length-0.35:.3f}:d=0.35[v];')
-                audio_index=4
             else:
                 args+=['-i',str(voice)]
-                video=(f'[0:v]fade=t=in:st=0:d=0.25,'
-                       f'fade=t=out:st={length-0.35:.3f}:d=0.35[v];')
+                video=(f'[0:v]fade=t=in:st=0:d=0.4:color=white,'
+                       f'fade=t=out:st={length-0.45:.3f}:d=0.45:color=white[v];')
                 audio_index=1
             filters=video+f'[{audio_index}:a]apad,afade=t=out:st={length-0.5:.3f}:d=0.5[a]'
             segment=work/f'segment-{index:02d}.mp4'
