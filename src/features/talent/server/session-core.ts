@@ -21,6 +21,7 @@ export function verifyDemoSession(token: string, secret: string, now = Date.now(
 }
 
 export function assertDemoRequest(request: Request, mutation: boolean, environment = process.env.NODE_ENV, allowProduction = process.env.TALENT_DEMO_ALLOW_PRODUCTION) {
+  if (process.env.NEXT_PUBLIC_SHARED_DEMO === 'true') throw new TalentError('共有デモはブラウザ内だけで動作します。',403)
   const url = new URL(request.url)
   if (!['localhost','127.0.0.1','[::1]'].includes(url.hostname)) throw new TalentError('このデモAPIはローカル環境専用です。',403)
   // Next.js may normalize request.url to localhost even when the browser uses

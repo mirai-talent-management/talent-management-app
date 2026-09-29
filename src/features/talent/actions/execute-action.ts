@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import type { Actor, TalentProfile, TalentStore } from '../types.ts'
 import { TalentError } from '../server/errors.ts'
 import { activityInput, choice, object, onlyKeys, profilePatch, skillCategory, text } from '../server/validation.ts'
@@ -46,7 +45,7 @@ export function executeTalentAction(store: TalentStore, actor: Actor, input: unk
       const category = skillCategory(body.category)
       const normalized = normalizeSkill(originalText)
       if (profile.talents.some(skill => skill.normalizedName.toLocaleLowerCase() === normalized.normalizedName.toLocaleLowerCase() && skill.source === 'self')) throw new TalentError('この本人申告スキルは登録済みです。',409)
-      profile.talents.push({id:randomUUID(),originalText,normalizedName:normalized.normalizedName,relatedTerms:normalized.relatedTerms,category,source:'self',evidenceId:null,approvedAt:now})
+      profile.talents.push({id:crypto.randomUUID(),originalText,normalizedName:normalized.normalizedName,relatedTerms:normalized.relatedTerms,category,source:'self',evidenceId:null,approvedAt:now})
       syncLegacySkills(profile)
       return {ok:true}
     }
@@ -95,10 +94,10 @@ export function executeTalentAction(store: TalentStore, actor: Actor, input: unk
         const normalized = finalText === suggestion.originalText
           ? {normalizedName:suggestion.normalizedName,relatedTerms:suggestion.relatedTerms,category:suggestion.category}
           : normalizeSkill(finalText)
-        const evidenceId = randomUUID()
+        const evidenceId = crypto.randomUUID()
         store.evidence.push({id:evidenceId,profileId:actor.id,source:suggestion.source,description:finalText,reference:null,occurredAt:now})
         const recommendationId = suggestion.source === 'recommendation' ? store.recommendations.find(item => item.toId === actor.id && item.suggestionIds.includes(suggestion.id))?.id ?? null : null
-        profile.talents.push({id:randomUUID(),originalText:finalText,normalizedName:normalized.normalizedName,relatedTerms:normalized.relatedTerms,category:suggestion.category,source:suggestion.source,evidenceId,approvedAt:now,recommendationId})
+        profile.talents.push({id:crypto.randomUUID(),originalText:finalText,normalizedName:normalized.normalizedName,relatedTerms:normalized.relatedTerms,category:suggestion.category,source:suggestion.source,evidenceId,approvedAt:now,recommendationId})
         syncLegacySkills(profile)
       }
       return {ok:true}
@@ -136,7 +135,7 @@ export function executeTalentAction(store: TalentStore, actor: Actor, input: unk
       if (!store.profiles.some(item => item.id === toId)) throw new TalentError('推薦先が見つかりません。',404)
       const suggestions = extractSkills(recommendationText,{profileId:toId,origin:'recommendation'})
       if (!suggestions.length) throw new TalentError('具体的にできることを含めて推薦してください。')
-      store.recommendations.push({id:randomUUID(),fromId:actor.id,fromName:actor.name,toId,text:recommendationText,source:'recommendation',createdAt:now,suggestionIds:suggestions.map(item => item.id)})
+      store.recommendations.push({id:crypto.randomUUID(),fromId:actor.id,fromName:actor.name,toId,text:recommendationText,source:'recommendation',createdAt:now,suggestionIds:suggestions.map(item => item.id)})
       store.suggestions.push(...suggestions)
       return {ok:true}
     }

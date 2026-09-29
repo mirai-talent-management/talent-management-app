@@ -1,0 +1,11 @@
+# Never upload local demo state or local credentials with a CLI deployment.
+.local/
+.env*
+.next/
+.next-build/
+.next-share/
+test-results/
+*.log
+
+# The presentation video is already available through the README's YouTube link.
+docs/*.mp4
